@@ -5,12 +5,14 @@
 
 import SwiftUI
 
+/// Protocol for `Model3DView` cameras.
 public protocol Camera {
 	var position: Vector3 { get set }
 	var rotation: Vector3 { get set }
 	func projectionMatrix(viewport: CGSize) -> Matrix4x4
 }
 
+/// Camera with orthographic projection.
 public struct OrthographicCamera: Camera {
 	public var position: Vector3
 	public var rotation: Vector3
@@ -35,6 +37,7 @@ public struct OrthographicCamera: Camera {
 	}
 }
 
+/// Camera with perspective projection.
 public struct PerspectiveCamera: Camera {
 	public var position: Vector3
 	public var rotation: Vector3

@@ -11,6 +11,8 @@ public typealias Vector3 = SIMD3<Float>
 public typealias Vector4 = SIMD4<Float>
 public typealias Matrix4x4 = float4x4
 
+// MARK: - Matrix 4x4 utilities.
+/// Consider making these public?
 extension Matrix4x4 {
 	static func orthographic(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) -> Matrix4x4 {
 		let lr = 1 / (left - right)

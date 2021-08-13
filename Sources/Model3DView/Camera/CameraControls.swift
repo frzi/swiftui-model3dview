@@ -8,9 +8,22 @@ import SwiftUI
 
 public protocol CameraControls {}
 
-public struct OrbitCamera: CameraControls, ViewModifier {
+/// Camera with orbit controls (also known as "arcball").
+///
+/// The camera can be moved horizontally, vertically and zoomed in and out. The camera will always focus on the center
+/// of the scene (0, 0, 0).
+/// ```swift
+/// @State var camera = PerspectiveCamera()
+/// // etc ...
+/// Model3DView("bunny.gltf")
+/// 	.cameraControls(OrbitCamera(camera: $camera))
+/// ```
+///
+/// ## Zooming
+/// Zooming is done by moving the camera on its local Z axis, opposed to increasing and decreasing the FOV.
+public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 
-	public var camera: Binding<Camera>
+	public var camera: Binding<C>
 	public var sensitivity: Float
 	public var minPitch: Float
 	public var maxPitch: Float
@@ -18,15 +31,17 @@ public struct OrbitCamera: CameraControls, ViewModifier {
 	public var maxYaw: Float
 	public var minZoom: Float
 	public var maxZoom: Float
-	
+
 	// Keeping track of gestures.
 	@State private var position = CGPoint()
 	@State private var previousPosition: CGPoint?
 	@State private var zoom: CGFloat = 0
-	
+	@State private var velocityPan: CGPoint = .zero
+	@State private var velocityZoom: CGFloat = 0
+
 	// MARK: -
 	public init(
-		camera: Binding<Camera>,
+		camera: Binding<C>,
 		sensitivity: Float = 1,
 		minPitch: Float = -.infinity,
 		maxPitch: Float = .infinity,
@@ -44,17 +59,12 @@ public struct OrbitCamera: CameraControls, ViewModifier {
 		self.minZoom = minZoom
 		self.maxZoom = maxZoom
 	}
-	
+
+	// MARK: -
 	private var dragGesture: some Gesture {
 		DragGesture()
 			.onChanged { state in
-				if previousPosition == nil {
-					previousPosition = state.location
-				}
-
-				position.x += (state.location.x - previousPosition!.x) * CGFloat(sensitivity)
-				position.y += (state.location.y - previousPosition!.y) * CGFloat(sensitivity)
-				previousPosition = state.location
+				// ...
 			}
 			.onEnded { state in
 				previousPosition = nil
@@ -67,15 +77,18 @@ public struct OrbitCamera: CameraControls, ViewModifier {
 				zoom += state
 			}
 	}
+
+	// Updating the camera and other values at a per-tick rate.
+	private func tick(frame: DisplayLink.Frame) {
+		camera.wrappedValue.position.x = Float(position.x)
+	}
 	
 	public func body(content: Content) -> some View {
 		content
 			.gesture(dragGesture)
 			.gesture(pinchGesture)
 			.environment(\.camera, camera.wrappedValue)
-			.onFrame(isActive: false) { frame in
-				// ...
-			}
+			.onFrame(isActive: false, tick)
 	}
 }
 

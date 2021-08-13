@@ -11,11 +11,11 @@ struct CameraEnvironmentKey: EnvironmentKey {
 }
 
 struct IBLEnvironmentKey: EnvironmentKey {
-	static var defaultValue: URL? = nil
+	static var defaultValue: URL?
 }
 
 struct SkyboxEnvironmentKey: EnvironmentKey {
-	static var defaultValue: URL? = nil
+	static var defaultValue: URL?
 }
 
 // MARK: - Environment values.
