@@ -3,7 +3,6 @@
  * Created by Freek Zijlmans on 08-08-2021.
  */
 
-import Combine
 import GLTFSceneKit
 import SceneKit
 import SwiftUI
@@ -62,7 +61,7 @@ public struct Model3DView: ViewRepresentable {
 		#if os(iOS)
 		view.preferredFramesPerSecond = UIScreen.main.maximumFramesPerSecond
 		#endif
-		//view.rendersContinuously = true // Not necessary?
+		view.rendersContinuously = true // Not necessary?
 		
 		context.coordinator.setView(view)
 		
@@ -117,12 +116,9 @@ extension Model3DView {
 		private var scene: SCNScene?
 		fileprivate private(set) var sceneFile: SceneFileType?
 		
-		// Viewport.
-		private var viewportSize: CGSize = .zero
-		private var viewportSizeCancellable: AnyCancellable?
-		
 		// Camera
 		fileprivate var camera: Camera?
+		private var cameraScale: Float = 1
 		private var cameraNode: SCNNode = {
 			let node = SCNNode()
 			node.name = "CameraNode"
@@ -136,13 +132,9 @@ extension Model3DView {
 		
 		// MARK: - Setting scene properties.
 		fileprivate func setView(_ view: SCNView) {
-			self.view = view
+			view.delegate = self
 			view.pointOfView = cameraNode
-
-			// Prepare subscribers and publishers.
-			viewportSizeCancellable = view.publisher(for: \.frame)
-				.map { $0.size }
-				.assign(to: \.viewportSize, on: self)
+			self.view = view
 		}
 		
 		fileprivate func setSceneFile(_ sceneFile: SceneFileType) {
@@ -179,8 +171,10 @@ extension Model3DView {
 // refer to `self.view` at any time.
 extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-		if let camera = camera {
-			let projection = SCNMatrix4(camera.projectionMatrix(viewport: viewportSize))
+		if let camera = camera,
+		   let view = view
+		{
+			let projection = SCNMatrix4(camera.projectionMatrix(viewport: view.currentViewport.size))
 			cameraNode.camera?.projectionTransform = projection
 		}
 	}
