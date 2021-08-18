@@ -38,6 +38,10 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	@State private var zoom: CGFloat = 0
 	@State private var velocityPan: CGPoint = .zero
 	@State private var velocityZoom: CGFloat = 0
+	
+	private var isAnimating: Bool {
+		velocityPan.x > 0 || velocityPan.y > 0 || velocityZoom > 0
+	}
 
 	// MARK: -
 	public init(
@@ -88,7 +92,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 			.gesture(dragGesture)
 			.gesture(pinchGesture)
 			.environment(\.camera, camera.wrappedValue)
-			.onFrame(isActive: false, tick)
+			.onFrame(isActive: isAnimating, tick)
 	}
 }
 

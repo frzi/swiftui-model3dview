@@ -9,12 +9,20 @@ import simd
 public typealias Vector2 = SIMD2<Float>
 public typealias Vector3 = SIMD3<Float>
 public typealias Vector4 = SIMD4<Float>
+public typealias Quaternion = simd_quatf
 public typealias Matrix4x4 = float4x4
 
+// MARK: - Quaternion utilities.
+extension Quaternion: ExpressibleByArrayLiteral {
+	public init(arrayLiteral elements: Float...) {
+		precondition(elements.count == 4)
+		self.init(ix: elements[0], iy: elements[1], iz: elements[2], r: elements[3])
+	}
+}
+
 // MARK: - Matrix 4x4 utilities.
-/// Consider making these public?
 extension Matrix4x4 {
-	static func orthographic(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) -> Matrix4x4 {
+	public static func orthographic(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) -> Matrix4x4 {
 		let lr = 1 / (left - right)
 		let bt = 1 / (bottom - top)
 		let nf = 1 / (near - far)
@@ -26,7 +34,7 @@ extension Matrix4x4 {
 		)
 	}
 	
-	static func perspective(fov: Float, aspect: Float, near: Float, far: Float) -> Matrix4x4 {
+	public static func perspective(fov: Float, aspect: Float, near: Float, far: Float) -> Matrix4x4 {
 		let f = 1 / tan(fov * 0.5)
 		let nf = 1 / (near - far)
 		return Matrix4x4(

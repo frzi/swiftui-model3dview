@@ -29,7 +29,7 @@ public struct Model3DView: ViewRepresentable {
 	private let sceneFile: SceneFileType
 	
 	// Settable properties via view modifiers.
-	private var rotation: Vector3 = [0, 0, 0]
+	private var rotation: Quaternion = [0, 0, 0, 1]
 	private var scale: Vector3 = [1, 1, 1]
 	private var translate: Vector3 = [0, 0, 0]
 	
@@ -52,7 +52,7 @@ public struct Model3DView: ViewRepresentable {
 		sceneFile = .reference(scene)
 	}
 
-	// MARK: - Private implementations.
+	// MARK: - Private implementations
 	private func makeView(context: Context) -> SCNView {
 		let view = SCNView()
 		view.antialiasingMode = .multisampling2X
@@ -60,23 +60,23 @@ public struct Model3DView: ViewRepresentable {
 		view.backgroundColor = .clear
 		#if os(iOS)
 		view.preferredFramesPerSecond = UIScreen.main.maximumFramesPerSecond
+		#elseif os(macOS)
+		if #available(macOS 12, *) {
+			view.preferredFramesPerSecond = view.window?.screen?.maximumFramesPerSecond ?? view.preferredFramesPerSecond
+		}
 		#endif
-		view.rendersContinuously = true // Not necessary?
 		
 		context.coordinator.setView(view)
 		
 		return view
 	}
-		
+
 	private func updateView(_ view: SCNView, context: Context) {
 		let coordinator = context.coordinator
 		
-		if coordinator.sceneFile != sceneFile {
-			coordinator.setSceneFile(sceneFile)
-		}
-		
-		coordinator.camera = context.environment.camera
+		coordinator.setSceneFile(sceneFile)
 		coordinator.setTransform(rotation: rotation, scale: scale, translate: translate)
+		coordinator.camera = context.environment.camera
 
 		view.showsStatistics = showsStatistics
 	}
@@ -108,17 +108,16 @@ extension Model3DView {
 }
 
 // MARK: - Coordinator
-/// Holds all the state values.
 extension Model3DView {
+	/// Holds all the state values.
 	public class SceneCoordinator: NSObject {
 		// References for future diffing.
 		private weak var view: SCNView?
 		private var scene: SCNScene?
 		fileprivate private(set) var sceneFile: SceneFileType?
-		
+
 		// Camera
 		fileprivate var camera: Camera?
-		private var cameraScale: Float = 1
 		private var cameraNode: SCNNode = {
 			let node = SCNNode()
 			node.name = "CameraNode"
@@ -126,56 +125,69 @@ extension Model3DView {
 			return node
 		}()
 
+		private var contentScale: Float = 1
 		private var contentNode: SCNNode? {
 			scene?.rootNode.childNodes.first { $0 != cameraNode }
 		}
-		
+
 		// MARK: - Setting scene properties.
 		fileprivate func setView(_ view: SCNView) {
 			view.delegate = self
-			view.pointOfView = cameraNode
 			self.view = view
 		}
-		
+
 		fileprivate func setSceneFile(_ sceneFile: SceneFileType) {
+			guard self.sceneFile != sceneFile else {
+				return
+			}
+
 			self.sceneFile = sceneFile
 			scene = sceneFile.scene
 			scene?.rootNode.addChildNode(cameraNode)
 			view?.scene = scene
+			view?.pointOfView = cameraNode
 			
 			guard let contentNode = contentNode else {
 				return
 			}
 
+			// Scale the scene/model to normalized (-1, 1) scale.
+			let maxDimension = max(
+				contentNode.boundingBox.max.x - contentNode.boundingBox.min.x,
+				contentNode.boundingBox.max.y - contentNode.boundingBox.min.y,
+				contentNode.boundingBox.max.z - contentNode.boundingBox.min.z
+			)
+			contentScale = Float(2 / maxDimension)
+			
 			// Set up the camera positioning. Attempt to center the model in the view.
-			let centerY = contentNode.boundingSphere.center.y
+			let centerY = contentNode.boundingSphere.center.y * CGFloat(contentScale)
 			cameraNode.position.y = centerY
-			cameraNode.position.z = 10
+			cameraNode.position.z = 2
 		}
-		
+
 		// MARK: - Apply new values.
-		fileprivate func setTransform(rotation: Vector3, scale: Vector3, translate: Vector3) {
+		fileprivate func setTransform(rotation: Quaternion, scale: Vector3, translate: Vector3) {
 			guard let contentNode = contentNode else {
 				return
 			}
 			
 			//rootNode.rotation = SCNVector4(rotation.x, rotation.y, rotation.z, 1)
-			contentNode.scale = SCNVector3(scale)
-			contentNode.position = SCNVector3(translate)
+			contentNode.simdScale = scale * contentScale
+			contentNode.simdPosition = translate
 		}
 	}
 }
 
 // MARK: - SCNSceneRendererDelegate
-// Note: Methods can - and most likely will be - called on a different thread. Thus it is important to not
-// refer to `self.view` at any time.
+// Note: Methods can - and most likely will be - called on a different thread. Thus it is important to not refer to
+// `view.bounds` or `view.frame` etc.
 extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
 		if let camera = camera,
 		   let view = view
 		{
-			let projection = SCNMatrix4(camera.projectionMatrix(viewport: view.currentViewport.size))
-			cameraNode.camera?.projectionTransform = projection
+			let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
+			cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
 		}
 	}
 }
@@ -190,8 +202,8 @@ extension Model3DView {
 	}
 	
 	/// Transform the model in 3D space. Use this to either rotate, scale or move the 3D model from the center.
-	/// Applying this modifier multiple times will result in previously set values being overridden.
-	public func transform(rotate: Vector3? = nil, scale: Vector3? = nil, translate: Vector3? = nil) -> Self {
+	/// Applying this modifier multiple times will result in overriding previously set values.
+	public func transform(rotate: Quaternion? = nil, scale: Vector3? = nil, translate: Vector3? = nil) -> Self {
 		var view = self
 		view.rotation = rotate ?? view.rotation
 		view.scale = scale ?? view.scale
