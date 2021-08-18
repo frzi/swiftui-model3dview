@@ -74,9 +74,13 @@ public struct Model3DView: ViewRepresentable {
 	private func updateView(_ view: SCNView, context: Context) {
 		let coordinator = context.coordinator
 		
-		coordinator.setSceneFile(sceneFile)
-		coordinator.setTransform(rotation: rotation, scale: scale, translate: translate)
+		if coordinator.sceneFile != sceneFile {
+			coordinator.setSceneFile(sceneFile)
+		}
+
 		coordinator.camera = context.environment.camera
+		coordinator.onLoadHandlers = onLoadHandlers
+		coordinator.setTransform(rotation: rotation, scale: scale, translate: translate)
 
 		view.showsStatistics = showsStatistics
 	}
@@ -115,6 +119,8 @@ extension Model3DView {
 		private weak var view: SCNView!
 		private var scene: SCNScene?
 		fileprivate private(set) var sceneFile: SceneFileType?
+		
+		fileprivate var onLoadHandlers: [(ModelLoadState) -> Void] = []
 
 		// Camera
 		fileprivate var camera: Camera?
@@ -141,9 +147,16 @@ extension Model3DView {
 			guard self.sceneFile != sceneFile else {
 				return
 			}
-
+			
 			self.sceneFile = sceneFile
-			scene = sceneFile.scene
+
+			DispatchQueue.global(qos: .userInitiated).async {
+				self.prepareScene()
+			}
+		}
+		
+		private func prepareScene() {
+			scene = self.sceneFile?.scene
 			scene?.rootNode.addChildNode(cameraNode)
 			view.scene = scene
 			view.pointOfView = cameraNode
@@ -160,6 +173,12 @@ extension Model3DView {
 			)
 			contentScale = Float(2 / maxDimension)
 			contentCenter = [0, Float(contentNode.boundingSphere.center.y) * contentScale, 0]
+			
+			DispatchQueue.main.async {
+				for onLoad in self.onLoadHandlers {
+					onLoad(.success)
+				}
+			}
 		}
 
 		// MARK: - Apply new values.

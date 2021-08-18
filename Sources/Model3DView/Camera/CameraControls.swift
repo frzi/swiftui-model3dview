@@ -34,11 +34,11 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	
 	// Values to apply to the camera.
 	@State private var rotation = CGPoint()
-	@State private var zoom: CGFloat = 4
+	@State private var zoom: CGFloat = 2
 
 	// Keeping track of gestures.
 	@State private var dragPosition: CGPoint?
-	@State private var zoomPosition: CGFloat = 0
+	@State private var zoomPosition: CGFloat = 1
 	@State private var velocityPan = CGPoint()
 	@State private var velocityZoom: CGFloat = 0
 	@State private var isAnimating = false
@@ -51,8 +51,8 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 		maxPitch: Angle = .degrees(89),
 		minYaw: Angle = .degrees(-.infinity),
 		maxYaw: Angle = .degrees(.infinity),
-		minZoom: CGFloat = 0,
-		maxZoom: CGFloat = .infinity
+		minZoom: CGFloat = 1,
+		maxZoom: CGFloat = 10
 	) {
 		self.camera = camera
 		self.sensitivity = sensitivity
@@ -66,7 +66,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 
 	// MARK: -
 	private var dragGesture: some Gesture {
-		DragGesture()
+		DragGesture(minimumDistance: 0, coordinateSpace: .local)
 			.onChanged { state in
 				if let dragPosition = dragPosition {
 					velocityPan = CGPoint(
@@ -84,7 +84,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 				isAnimating = true
 				dragPosition = state.location
 			}
-			.onEnded { state in
+			.onEnded { _ in
 				dragPosition = nil
 			}
 	}
@@ -92,7 +92,12 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	private var pinchGesture: some Gesture {
 		MagnificationGesture()
 			.onChanged { state in
-				print(state)
+				isAnimating = true
+				velocityZoom = zoomPosition - state
+				zoomPosition = state
+			}
+			.onEnded { _ in
+				zoomPosition = 1
 			}
 	}
 
@@ -122,8 +127,8 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 			.gesture(dragGesture)
 			.gesture(pinchGesture)
 			.environment(\.camera, camera.wrappedValue)
-			.onFrame(isActive: isAnimating, tick)
 			.onAppear { tick() }
+			.onFrame(isActive: isAnimating, tick)
 	}
 }
 
