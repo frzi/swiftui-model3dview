@@ -12,7 +12,7 @@ import SwiftUI
 ///
 /// This view utilizes SceneKit to render a 3D model or a SceneKit scene.
 /// ```swift
-/// Model3DView(named: "shoe.gltf")
+/// Model3DView(named: "duck.gltf")
 /// 	.transform(scale: [0.5, 0.5, 0.5])
 /// 	.camera(perspectiveCamera)
 /// ```
@@ -27,15 +27,15 @@ import SwiftUI
 public struct Model3DView: ViewRepresentable {
 
 	private let sceneFile: SceneFileType
-	
+
 	// Settable properties via view modifiers.
 	private var rotation: Quaternion = [0, 0, 0, 1]
 	private var scale: Vector3 = [1, 1, 1]
 	private var translate: Vector3 = [0, 0, 0]
-	
+
 	private var onLoadHandlers: [(ModelLoadState) -> Void] = []
 	private var showsStatistics = false
-	
+
 	// MARK: -
 	/// Load a 3D asset from the app's bundle.
 	public init(named: String) {
@@ -112,7 +112,7 @@ extension Model3DView {
 	/// Holds all the state values.
 	public class SceneCoordinator: NSObject {
 		// References for future diffing.
-		private weak var view: SCNView?
+		private weak var view: SCNView!
 		private var scene: SCNScene?
 		fileprivate private(set) var sceneFile: SceneFileType?
 
@@ -126,6 +126,7 @@ extension Model3DView {
 		}()
 
 		private var contentScale: Float = 1
+		private var contentCenter = Vector3()
 		private var contentNode: SCNNode? {
 			scene?.rootNode.childNodes.first { $0 != cameraNode }
 		}
@@ -144,8 +145,8 @@ extension Model3DView {
 			self.sceneFile = sceneFile
 			scene = sceneFile.scene
 			scene?.rootNode.addChildNode(cameraNode)
-			view?.scene = scene
-			view?.pointOfView = cameraNode
+			view.scene = scene
+			view.pointOfView = cameraNode
 			
 			guard let contentNode = contentNode else {
 				return
@@ -158,11 +159,7 @@ extension Model3DView {
 				contentNode.boundingBox.max.z - contentNode.boundingBox.min.z
 			)
 			contentScale = Float(2 / maxDimension)
-			
-			// Set up the camera positioning. Attempt to center the model in the view.
-			let centerY = contentNode.boundingSphere.center.y * CGFloat(contentScale)
-			cameraNode.position.y = centerY
-			cameraNode.position.z = 2
+			contentCenter = [0, Float(contentNode.boundingSphere.center.y) * contentScale, 0]
 		}
 
 		// MARK: - Apply new values.
@@ -171,7 +168,7 @@ extension Model3DView {
 				return
 			}
 			
-			//rootNode.rotation = SCNVector4(rotation.x, rotation.y, rotation.z, 1)
+			contentNode.simdOrientation = rotation
 			contentNode.simdScale = scale * contentScale
 			contentNode.simdPosition = translate
 		}
@@ -183,11 +180,13 @@ extension Model3DView {
 // `view.bounds` or `view.frame` etc.
 extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-		if let camera = camera,
-		   let view = view
-		{
+		if let camera = camera {
 			let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
 			cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
+
+			cameraNode.simdPosition = camera.position
+			cameraNode.simdOrientation = camera.rotation
+			cameraNode.simdLook(at: contentCenter) // Replace with above.
 		}
 	}
 }

@@ -20,7 +20,7 @@ public struct OrthographicCamera: Camera {
 	public var far: Float
 	
 	public init(
-		position: Vector3 = [0, 0, 0],
+		position: Vector3 = [0, 0, 2],
 		rotation: Quaternion = [0, 0, 0, 1],
 		near: Float = 0.0001,
 		far: Float = 100
@@ -46,8 +46,8 @@ public struct PerspectiveCamera: Camera {
 	public var far: Float
 	
 	public init(
-		position: Vector3 = [0, 0, 0],
-		rotation: Quaternion = [0, 0, 0, 1],
+		position: Vector3 = [0, 0, 2],
+		rotation: Quaternion = [0, 0, 0, 2],
 		fov: Angle = .degrees(60),
 		near: Float = 0.0001,
 		far: Float = 100
