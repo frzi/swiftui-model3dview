@@ -159,7 +159,6 @@ extension Model3DView {
 			scene = self.sceneFile?.scene
 			scene?.rootNode.addChildNode(cameraNode)
 			view.scene = scene
-			view.pointOfView = cameraNode
 			
 			guard let contentNode = contentNode else {
 				return
@@ -178,6 +177,8 @@ extension Model3DView {
 				for onLoad in self.onLoadHandlers {
 					onLoad(.success)
 				}
+				
+				self.view.pointOfView = self.cameraNode
 			}
 		}
 

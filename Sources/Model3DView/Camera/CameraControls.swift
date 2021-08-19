@@ -11,7 +11,7 @@ public protocol CameraControls {}
 /// Camera with orbit controls (also known as "arcball").
 ///
 /// The camera can be moved horizontally, vertically and zoomed in and out. The camera will always focus on the center
-/// of the scene (0, 0, 0).
+/// of the model.
 /// ```swift
 /// @State var camera = PerspectiveCamera()
 /// // etc ...
@@ -24,13 +24,14 @@ public protocol CameraControls {}
 public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 
 	public var camera: Binding<C>
-	public var sensitivity: CGFloat
+	public private(set) var sensitivity: CGFloat
 	public var minPitch: Angle
 	public var maxPitch: Angle
 	public var minYaw: Angle
 	public var maxYaw: Angle
 	public var minZoom: CGFloat
 	public var maxZoom: CGFloat
+	public private(set) var friction: CGFloat
 	
 	// Values to apply to the camera.
 	@State private var rotation = CGPoint()
@@ -39,8 +40,9 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	// Keeping track of gestures.
 	@State private var dragPosition: CGPoint?
 	@State private var zoomPosition: CGFloat = 1
-	@State private var velocityPan = CGPoint()
+	@State private var velocityPan: CGPoint = .zero
 	@State private var velocityZoom: CGFloat = 0
+
 	@State private var isAnimating = false
 
 	// MARK: -
@@ -52,16 +54,20 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 		minYaw: Angle = .degrees(-.infinity),
 		maxYaw: Angle = .degrees(.infinity),
 		minZoom: CGFloat = 1,
-		maxZoom: CGFloat = 10
+		maxZoom: CGFloat = 10,
+		friction: CGFloat = 0.1
 	) {
 		self.camera = camera
-		self.sensitivity = sensitivity
+		self.sensitivity = max(sensitivity, 0.01)
 		self.minPitch = minPitch
 		self.maxPitch = maxPitch
 		self.minYaw = minYaw
 		self.maxYaw = maxYaw
 		self.minZoom = minZoom
 		self.maxZoom = maxZoom
+		self.friction = min(max(friction, 0.01), 0.99)
+		
+		// TODO: Set initial `rotation` and `zoom` based on the Camera's values.
 	}
 
 	// MARK: -
@@ -103,11 +109,6 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 
 	// Updating the camera and other values at a per-tick rate.
 	private func tick(frame: DisplayLink.Frame? = nil) {
-		let deceleration: CGFloat = 0.8
-		velocityPan.x *= deceleration
-		velocityPan.y *= deceleration
-		velocityZoom *= deceleration
-		
 		rotation.x += velocityPan.x
 		rotation.y += velocityPan.y
 		zoom = min(max(zoom + velocityZoom, minZoom), maxZoom)
@@ -120,6 +121,12 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 		
 		let epsilon: CGFloat = 0.0001
 		isAnimating = abs(velocityPan.x) > epsilon || abs(velocityPan.y) > epsilon || abs(velocityZoom) > epsilon
+		
+		// Apply deceleration to the velocity.
+		let deceleration = 1 - friction
+		velocityPan.x *= deceleration
+		velocityPan.y *= deceleration
+		velocityZoom *= deceleration
 	}
 
 	public func body(content: Content) -> some View {
