@@ -115,7 +115,9 @@ extension Model3DView {
 extension Model3DView {
 	/// Holds all the state values.
 	public class SceneCoordinator: NSObject {
-		// References for future diffing.
+		
+		private static let resources = ResourcesCache<SCNScene>()
+
 		private weak var view: SCNView!
 		private var scene: SCNScene?
 		fileprivate private(set) var sceneFile: SceneFileType?
@@ -126,7 +128,7 @@ extension Model3DView {
 		fileprivate var camera: Camera?
 		private var cameraNode: SCNNode = {
 			let node = SCNNode()
-			node.name = "CameraNode"
+			node.name = "Camera Node"
 			node.camera = SCNCamera()
 			return node
 		}()
@@ -150,15 +152,16 @@ extension Model3DView {
 			
 			self.sceneFile = sceneFile
 
-			DispatchQueue.global(qos: .userInitiated).async {
+			DispatchQueue.global().async {
 				self.prepareScene()
 			}
 		}
 		
 		private func prepareScene() {
-			scene = self.sceneFile?.scene
+			scene = sceneFile?.scene
 			scene?.rootNode.addChildNode(cameraNode)
 			view.scene = scene
+			view.pointOfView = cameraNode
 			
 			guard let contentNode = contentNode else {
 				return
@@ -170,15 +173,13 @@ extension Model3DView {
 				contentNode.boundingBox.max.y - contentNode.boundingBox.min.y,
 				contentNode.boundingBox.max.z - contentNode.boundingBox.min.z
 			)
-			contentScale = Float(2 / maxDimension)
+			contentScale = Float(2 / maxDimension) * 0.8
 			contentCenter = [0, Float(contentNode.boundingSphere.center.y) * contentScale, 0]
 			
 			DispatchQueue.main.async {
 				for onLoad in self.onLoadHandlers {
 					onLoad(.success)
 				}
-				
-				self.view.pointOfView = self.cameraNode
 			}
 		}
 
@@ -204,7 +205,7 @@ extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 			let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
 			cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
 
-			cameraNode.simdPosition = camera.position
+			cameraNode.simdPosition = camera.position + contentCenter + [0, 0.0001, 0]
 			cameraNode.simdOrientation = camera.rotation
 			cameraNode.simdLook(at: contentCenter) // Replace with above.
 		}
