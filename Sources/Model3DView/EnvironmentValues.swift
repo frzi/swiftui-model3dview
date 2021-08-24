@@ -14,6 +14,10 @@ struct IBLEnvironmentKey: EnvironmentKey {
 	static var defaultValue: URL?
 }
 
+struct ModelAnimationKey: EnvironmentKey {
+	static var defaultValue: String?
+}
+
 struct SkyboxEnvironmentKey: EnvironmentKey {
 	static var defaultValue: URL?
 }
@@ -28,6 +32,11 @@ extension EnvironmentValues {
 	var ibl: URL? {
 		get { self[IBLEnvironmentKey.self] }
 		set { self[IBLEnvironmentKey.self] = newValue }
+	}
+	
+	var modelAnimation: String? {
+		get { self[ModelAnimationKey.self] }
+		set { self[ModelAnimationKey.self] = newValue }
 	}
 	
 	var skybox: URL? {

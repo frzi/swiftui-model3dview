@@ -3,6 +3,7 @@
  * Created by Freek Zijlmans on 08-08-2021.
  */
 
+import Combine
 import GLTFSceneKit
 import SceneKit
 import SwiftUI
@@ -14,7 +15,7 @@ import SwiftUI
 /// ```swift
 /// Model3DView(named: "duck.gltf")
 /// 	.transform(scale: [0.5, 0.5, 0.5])
-/// 	.camera(perspectiveCamera)
+/// 	.camera(PerspectiveCamera())
 /// ```
 ///
 /// ## Supported file types
@@ -23,7 +24,7 @@ import SwiftUI
 /// * `.obj`: Waveform 3D Object format
 /// * `.scn`: SceneKit scene file
 ///
-/// - Note: Keep the number of `Model3DView`s simultaneously on screen to a minimum.
+/// - Important: Keep the number of `Model3DView`s simultaneously on screen to a minimum.
 public struct Model3DView: ViewRepresentable {
 
 	private let sceneFile: SceneFileType
@@ -65,9 +66,9 @@ public struct Model3DView: ViewRepresentable {
 			view.preferredFramesPerSecond = view.window?.screen?.maximumFramesPerSecond ?? view.preferredFramesPerSecond
 		}
 		#endif
-		
+
 		context.coordinator.setView(view)
-		
+	
 		return view
 	}
 
@@ -115,11 +116,12 @@ extension Model3DView {
 extension Model3DView {
 	/// Holds all the state values.
 	public class SceneCoordinator: NSObject {
-		
-		private static let resources = ResourcesCache<SCNScene>()
+		/// Keep track of already loaded scenes.
+		private static let resources = ResourcesCache<URL, SCNScene>()
 
-		private weak var view: SCNView!
+		private var loadCancellable: AnyCancellable?
 		private var scene: SCNScene?
+		private weak var view: SCNView!
 		fileprivate private(set) var sceneFile: SceneFileType?
 		
 		fileprivate var onLoadHandlers: [(ModelLoadState) -> Void] = []
@@ -149,16 +151,41 @@ extension Model3DView {
 			guard self.sceneFile != sceneFile else {
 				return
 			}
-			
+
 			self.sceneFile = sceneFile
 
-			DispatchQueue.global().async {
-				self.prepareScene()
+			// Load the scene file/reference.
+			// If an url is given, the scene will be loaded asynchronously via `ResourcesCache`, making sure only
+			// only one instance lives in memory.
+			if case .url(let sceneUrl) = sceneFile,
+			   let url = sceneUrl
+			{
+				loadCancellable = Self.resources.resource(for: url) { url in
+					if url.pathExtension == "gltf" || url.pathExtension == "glb" {
+						let source = GLTFSceneSource(url: url, options: nil)
+						let scene = try! source.scene()
+						return scene
+					}
+					else if let scene = try? SCNScene(url: url) {
+						return scene
+					}
+					else {
+						return SCNScene()
+					}
+				}
+				.receive(on: DispatchQueue.main)
+				.sink(receiveCompletion: { _ in }) { [weak self] scene in
+					self?.scene = scene
+					self?.prepareScene()
+				}
+			}
+			else if case .reference(let scene) = sceneFile {
+				self.scene = scene
+				prepareScene()
 			}
 		}
 		
 		private func prepareScene() {
-			scene = sceneFile?.scene
 			scene?.rootNode.addChildNode(cameraNode)
 			view.scene = scene
 			view.pointOfView = cameraNode
@@ -192,6 +219,11 @@ extension Model3DView {
 			contentNode.simdOrientation = rotation
 			contentNode.simdScale = scale * contentScale
 			contentNode.simdPosition = translate
+		}
+		
+		// MARK: - Clean up
+		deinit {
+			cameraNode.removeFromParentNode()
 		}
 	}
 }
