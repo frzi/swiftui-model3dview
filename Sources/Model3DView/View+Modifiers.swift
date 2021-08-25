@@ -14,13 +14,19 @@ extension View {
 	
 	// MARK: - Scene IBL
 	/// Sets the default Image Based Lighting (IBL) image from a file URL.
-	public func ibl(file: URL?) -> some View {
-		environment(\.ibl, file)
+	public func ibl(file: URL?, intensity: Double = 1) -> some View {
+		if let url = file {
+			return environment(\.ibl, (url, intensity))
+		}
+		return environment(\.ibl, nil)
 	}
 
 	/// Sets the default Image Based Lighting (IBL) image from a bundle resource.
-	public func ibl(named: String) -> some View {
-		environment(\.ibl, Bundle.main.url(forResource: named, withExtension: nil))
+	public func ibl(named: String, intensity: Double = 1) -> some View {
+		if let url = Bundle.main.url(forResource: named, withExtension: nil) {
+			return environment(\.ibl, (url, intensity))
+		}
+		return environment(\.ibl, nil)
 	}
 	
 	// MARK: - Model animation

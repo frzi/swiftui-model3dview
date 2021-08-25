@@ -11,7 +11,7 @@ struct CameraEnvironmentKey: EnvironmentKey {
 }
 
 struct IBLEnvironmentKey: EnvironmentKey {
-	static var defaultValue: URL?
+	static var defaultValue: IBLValues?
 }
 
 struct ModelAnimationKey: EnvironmentKey {
@@ -29,7 +29,7 @@ extension EnvironmentValues {
 		set { self[CameraEnvironmentKey.self] = newValue }
 	}
 	
-	var ibl: URL? {
+	var ibl: IBLValues? {
 		get { self[IBLEnvironmentKey.self] }
 		set { self[IBLEnvironmentKey.self] = newValue }
 	}

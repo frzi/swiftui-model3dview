@@ -16,6 +16,8 @@ typealias PlatformImage = UIImage
 typealias ViewRepresentable = UIViewRepresentable
 #endif
 
+typealias IBLValues = (url: URL, intensity: Double)
+
 public enum ModelLoadState {
 	case success
 	case error

@@ -84,7 +84,7 @@ public struct Model3DView: ViewRepresentable {
 		coordinator.onLoadHandlers = onLoadHandlers
 
 		// Methods.
-		coordinator.setIBL(asset: context.environment.ibl)
+		coordinator.setIBL(settings: context.environment.ibl)
 		coordinator.setSkybox(asset: context.environment.skybox)
 		coordinator.setTransform(rotation: rotation, scale: scale, translate: translate)
 	}
@@ -133,7 +133,7 @@ extension Model3DView {
 
 		// Properties for diffing.
 		private var sceneFile: SceneFileType?
-		private var ibl: URL?
+		private var ibl: IBLValues?
 		private var skybox: URL?
 
 		// Camera
@@ -166,7 +166,7 @@ extension Model3DView {
 
 			// Load the scene file/reference.
 			// If an url is given, the scene will be loaded asynchronously via `AsyncResourcesCache`, making sure
-			// only one instance lives in memory.
+			// only one instance lives in memory and doesn't block the main thread.
 			if case .url(let sceneUrl) = sceneFile,
 			   let url = sceneUrl
 			{
@@ -231,7 +231,7 @@ extension Model3DView {
 
 		// MARK: - Apply new values.
 		/**
-		 * There's currently an issue where these methods may be set pre-materualy - and without effect - before
+		 * There's currently an issue where these methods may be set pre-maturely - and without effect - before
 		 * the scene is actually loaded.
 		 */
 		/// Apply scene transforms.
@@ -264,22 +264,24 @@ extension Model3DView {
 		}
 		
 		/// Set the image based lighting textures from file.
-		fileprivate func setIBL(asset: URL?) {
-			guard asset != ibl, let scene = scene else {
+		fileprivate func setIBL(settings: IBLValues?) {
+			guard let scene = scene,
+				  ibl?.url != settings?.url || ibl?.intensity != settings?.intensity
+			else {
 				return
 			}
 			
-			if let asset = asset,
-			   let iblImage = PlatformImage(contentsOf: asset)
+			if let settings = settings,
+			   let iblImage = PlatformImage(contentsOf: settings.url)
 			{
 				scene.lightingEnvironment.contents = iblImage
-				scene.lightingEnvironment.intensity = 2.0
+				scene.lightingEnvironment.intensity = settings.intensity
 			}
 			else {
 				scene.lightingEnvironment.contents = nil
 			}
 			
-			ibl = asset
+			ibl = settings
 		}
 		
 		// MARK: - Clean up
