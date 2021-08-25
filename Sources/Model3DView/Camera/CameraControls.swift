@@ -49,8 +49,8 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	public init(
 		camera: Binding<C>,
 		sensitivity: CGFloat = 1,
-		minPitch: Angle = .degrees(-89),
-		maxPitch: Angle = .degrees(89),
+		minPitch: Angle = .degrees(-89.9),
+		maxPitch: Angle = .degrees(89.9),
 		minYaw: Angle = .degrees(-.infinity),
 		maxYaw: Angle = .degrees(.infinity),
 		minZoom: CGFloat = 1,
@@ -65,7 +65,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 		self.maxYaw = maxYaw
 		self.minZoom = minZoom
 		self.maxZoom = maxZoom
-		self.friction = min(max(friction, 0.01), 0.99)
+		self.friction = clamp(friction, 0.01, 0.99)
 		
 		// TODO: Set initial `rotation` and `zoom` based on the Camera's values.
 	}
@@ -108,10 +108,10 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	}
 
 	// Updating the camera and other values at a per-tick rate.
-	private func tick(frame: DisplayLink.Frame? = nil) {
-		rotation.x += velocityPan.x
-		rotation.y += velocityPan.y
-		zoom = min(max(zoom + velocityZoom, minZoom), maxZoom)
+	private func tick(frame: DisplayLink.Frame? = nil) {		
+		rotation.x = clamp(rotation.x + velocityPan.x, minYaw.degrees, maxYaw.degrees)
+		rotation.y = clamp(rotation.y + velocityPan.y, minPitch.degrees, maxPitch.degrees)
+		zoom = clamp(zoom + velocityZoom, minZoom, maxZoom)
 		
 		let theta = rotation.x * (.pi / 180)
 		let phi = rotation.y * (.pi / 180)

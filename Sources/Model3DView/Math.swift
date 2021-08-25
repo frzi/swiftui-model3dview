@@ -47,3 +47,8 @@ extension Matrix4x4 {
 		)
 	}
 }
+
+// MARK: - Misc.
+func clamp<T: Comparable>(_ val: T, _ minimum: T, _ maximum: T) -> T {
+	min(max(val, minimum), maximum)
+}

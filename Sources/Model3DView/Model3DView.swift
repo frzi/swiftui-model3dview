@@ -292,8 +292,9 @@ extension Model3DView {
 }
 
 // MARK: - SCNSceneRendererDelegate
-// Note: Methods can - and most likely will be - called on a different thread. Thus it is important to not refer to
-// `view.bounds` or `view.frame` etc.
+/**
+ * Note: Methods can - and most likely will be - called on a different thread.
+ */
 extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
 		if let camera = camera {
