@@ -26,7 +26,7 @@ import SwiftUI
 ///
 /// - Important: Keep the number of `Model3DView`s simultaneously on screen to a minimum.
 public struct Model3DView: ViewRepresentable {
-
+	
 	private let sceneFile: SceneFileType
 
 	// Settable properties via view modifiers.
@@ -59,12 +59,12 @@ public struct Model3DView: ViewRepresentable {
 		view.antialiasingMode = .multisampling2X
 		view.autoenablesDefaultLighting = true
 		view.backgroundColor = .clear
-		#if os(iOS)
-		view.preferredFramesPerSecond = UIScreen.main.maximumFramesPerSecond
-		#elseif os(macOS)
+		#if os(macOS)
 		if #available(macOS 12, *) {
 			view.preferredFramesPerSecond = view.window?.screen?.maximumFramesPerSecond ?? view.preferredFramesPerSecond
 		}
+		#else
+		view.preferredFramesPerSecond = UIScreen.main.maximumFramesPerSecond
 		#endif
 
 		context.coordinator.setView(view)
@@ -73,17 +73,20 @@ public struct Model3DView: ViewRepresentable {
 	}
 
 	private func updateView(_ view: SCNView, context: Context) {
-		let coordinator = context.coordinator
-		
-		if coordinator.sceneFile != sceneFile {
-			coordinator.setSceneFile(sceneFile)
-		}
+		view.showsStatistics = showsStatistics
 
+		// Update the coordinator.
+		let coordinator = context.coordinator
+		coordinator.setSceneFile(sceneFile)
+
+		// Properties.
 		coordinator.camera = context.environment.camera
 		coordinator.onLoadHandlers = onLoadHandlers
-		coordinator.setTransform(rotation: rotation, scale: scale, translate: translate)
 
-		view.showsStatistics = showsStatistics
+		// Methods.
+		coordinator.setIBL(asset: context.environment.ibl)
+		coordinator.setSkybox(asset: context.environment.skybox)
+		coordinator.setTransform(rotation: rotation, scale: scale, translate: translate)
 	}
 }
 
@@ -116,15 +119,22 @@ extension Model3DView {
 extension Model3DView {
 	/// Holds all the state values.
 	public class SceneCoordinator: NSObject {
-		/// Keep track of already loaded scenes.
-		private static let resources = ResourcesCache<URL, SCNScene>()
 
+		/// Keep track of already loaded scenes.
+		private static let sceneResources = AsyncResourcesCache<URL, SCNScene>()
+		private static let textureResources = AsyncResourcesCache<URL, PlatformImage>()
+
+		// MARK: -
 		private var loadCancellable: AnyCancellable?
 		private weak var scene: SCNScene?
 		private weak var view: SCNView!
-		fileprivate private(set) var sceneFile: SceneFileType?
-		
+
 		fileprivate var onLoadHandlers: [(ModelLoadState) -> Void] = []
+
+		// Properties for diffing.
+		private var sceneFile: SceneFileType?
+		private var ibl: URL?
+		private var skybox: URL?
 
 		// Camera
 		fileprivate var camera: Camera?
@@ -142,9 +152,9 @@ extension Model3DView {
 		}
 
 		// MARK: - Setting scene properties.
-		fileprivate func setView(_ view: SCNView) {
+		fileprivate func setView(_ sceneView: SCNView) {
+			view = sceneView
 			view.delegate = self
-			self.view = view
 		}
 
 		fileprivate func setSceneFile(_ sceneFile: SceneFileType) {
@@ -155,13 +165,12 @@ extension Model3DView {
 			self.sceneFile = sceneFile
 
 			// Load the scene file/reference.
-			// If an url is given, the scene will be loaded asynchronously via `ResourcesCache`, making sure only
+			// If an url is given, the scene will be loaded asynchronously via `AsyncResourcesCache`, making sure
 			// only one instance lives in memory.
-			// TODO: Clean this all up neatly. More loading resources to a different function.
 			if case .url(let sceneUrl) = sceneFile,
 			   let url = sceneUrl
 			{
-				loadCancellable = SceneCoordinator.resources.resource(for: url) { url in
+				loadCancellable = SceneCoordinator.sceneResources.resource(for: url) { url in
 					if ["gltf", "glb"].contains(url.pathExtension.lowercased()) {
 						let source = GLTFSceneSource(url: url, options: nil)
 						let scene = try! source.scene()
@@ -194,6 +203,15 @@ extension Model3DView {
 			guard let contentNode = contentNode else {
 				return
 			}
+			
+			// Set the lighting material.
+			let materials = contentNode
+				.childNodes { node, _ in node.geometry?.firstMaterial != nil }
+				.compactMap { $0.geometry?.firstMaterial }
+			
+			for material in materials {
+				material.lightingModel = SCNMaterial.LightingModel.physicallyBased
+			}
 
 			// Scale the scene/model to normalized (-1, 1) scale.
 			let maxDimension = max(
@@ -212,14 +230,56 @@ extension Model3DView {
 		}
 
 		// MARK: - Apply new values.
+		/**
+		 * There's currently an issue where these methods may be set pre-materualy - and without effect - before
+		 * the scene is actually loaded.
+		 */
+		/// Apply scene transforms.
 		fileprivate func setTransform(rotation: Quaternion, scale: Vector3, translate: Vector3) {
 			guard let contentNode = contentNode else {
 				return
 			}
-			
+
 			contentNode.simdOrientation = rotation
 			contentNode.simdScale = scale * contentScale
 			contentNode.simdPosition = translate
+		}
+		
+		/// Set the skybox texture from file.
+		fileprivate func setSkybox(asset: URL?) {
+			guard asset != skybox, let scene = scene else {
+				return
+			}
+			
+			if let asset = asset,
+			   let skyboxImage = PlatformImage(contentsOf: asset)
+			{
+				scene.background.contents = skyboxImage
+			}
+			else {
+				scene.background.contents = nil
+			}
+			
+			skybox = asset
+		}
+		
+		/// Set the image based lighting textures from file.
+		fileprivate func setIBL(asset: URL?) {
+			guard asset != ibl, let scene = scene else {
+				return
+			}
+			
+			if let asset = asset,
+			   let iblImage = PlatformImage(contentsOf: asset)
+			{
+				scene.lightingEnvironment.contents = iblImage
+				scene.lightingEnvironment.intensity = 2.0
+			}
+			else {
+				scene.lightingEnvironment.contents = nil
+			}
+			
+			ibl = asset
 		}
 		
 		// MARK: - Clean up

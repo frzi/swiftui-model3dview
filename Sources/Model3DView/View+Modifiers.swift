@@ -39,9 +39,9 @@ extension View {
 	/// .playState(.paused)
 	/// .animationPosition(0.5)
 	/// ```
-	public func modelAnimation(_ name: String?) -> some View {
-		environment(\.modelAnimation, name)
-	}
+	//public func modelAnimation(_ name: String?) -> some View {
+	//	environment(\.modelAnimation, name)
+	//}
 
 	// MARK: - Scene skybox
 	/// Sets the default skybox image from a file URL.

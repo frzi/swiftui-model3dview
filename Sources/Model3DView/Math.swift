@@ -22,6 +22,7 @@ extension Quaternion: ExpressibleByArrayLiteral {
 
 // MARK: - Matrix 4x4 utilities.
 extension Matrix4x4 {
+	@inlinable
 	public static func orthographic(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) -> Matrix4x4 {
 		let lr = 1 / (left - right)
 		let bt = 1 / (bottom - top)
@@ -34,6 +35,7 @@ extension Matrix4x4 {
 		)
 	}
 	
+	@inlinable
 	public static func perspective(fov: Float, aspect: Float, near: Float, far: Float) -> Matrix4x4 {
 		let f = 1 / tan(fov * 0.5)
 		let nf = 1 / (near - far)

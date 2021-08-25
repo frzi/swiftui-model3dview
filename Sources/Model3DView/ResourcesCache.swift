@@ -10,7 +10,7 @@ import Foundation
 /// Object keeping track of initialized resources.
 ///
 /// Resources are loaded asynchronously and kept in memory as long as there's at least one reference.
-final class ResourcesCache<K: Hashable, T: AnyObject> {
+final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 	private var table: [K : WeakFutureValue<T>] = [:]
 
 	/// Returns a publisher for the resource associated with `identifier`.

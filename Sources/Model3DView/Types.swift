@@ -21,11 +21,6 @@ public enum ModelLoadState {
 	case error
 }
 
-public enum LoadResult {
-	case success
-	case failure(Error)
-}
-
 enum SceneFileType: Equatable {
 	case reference(SCNScene)
 	case url(URL?)
