@@ -120,7 +120,7 @@ extension Model3DView {
 		private static let resources = ResourcesCache<URL, SCNScene>()
 
 		private var loadCancellable: AnyCancellable?
-		private var scene: SCNScene?
+		private weak var scene: SCNScene?
 		private weak var view: SCNView!
 		fileprivate private(set) var sceneFile: SceneFileType?
 		
@@ -157,11 +157,12 @@ extension Model3DView {
 			// Load the scene file/reference.
 			// If an url is given, the scene will be loaded asynchronously via `ResourcesCache`, making sure only
 			// only one instance lives in memory.
+			// TODO: Clean this all up neatly. More loading resources to a different function.
 			if case .url(let sceneUrl) = sceneFile,
 			   let url = sceneUrl
 			{
-				loadCancellable = Self.resources.resource(for: url) { url in
-					if url.pathExtension == "gltf" || url.pathExtension == "glb" {
+				loadCancellable = SceneCoordinator.resources.resource(for: url) { url in
+					if ["gltf", "glb"].contains(url.pathExtension.lowercased()) {
 						let source = GLTFSceneSource(url: url, options: nil)
 						let scene = try! source.scene()
 						return scene
@@ -174,7 +175,7 @@ extension Model3DView {
 					}
 				}
 				.receive(on: DispatchQueue.main)
-				.sink(receiveCompletion: { _ in }) { [weak self] scene in
+				.sink { _ in } receiveValue: { [weak self] scene in
 					self?.scene = scene
 					self?.prepareScene()
 				}
@@ -203,7 +204,7 @@ extension Model3DView {
 			contentScale = Float(2 / maxDimension) * 0.8
 			contentCenter = [0, Float(contentNode.boundingSphere.center.y) * contentScale, 0]
 			
-			DispatchQueue.main.async {
+			DispatchQueue.main.async { // Redundant?
 				for onLoad in self.onLoadHandlers {
 					onLoad(.success)
 				}
