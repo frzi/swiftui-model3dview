@@ -9,14 +9,43 @@ import Foundation
 
 /// Object keeping track of initialized resources.
 ///
+/// Resources are loaded via a given action and kept in memory as long as there's at least one reference.
+final class ResourcesCache<K: Hashable, T: AnyObject> {
+	private var table: [K : WeakValue] = [:]
+	
+	func resource(for key: K, action: (K) -> T) -> T {
+		if let container = table[key],
+		   let value = container.value
+		{
+			return value
+		}
+		
+		let value = action(key)
+
+		table[key] = WeakValue(value: value)
+
+		return value
+	}
+
+	
+	private final class WeakValue {
+		private(set) weak var value: T?
+		
+		init(value: T) {
+			self.value = value
+		}
+	}
+}
+
+/// Object keeping track of initialized resources.
+///
 /// Resources are loaded asynchronously and kept in memory as long as there's at least one reference.
-/// TODO: Error handling.
 final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 	private var table: [K : WeakFutureValue] = [:]
 
 	/// Returns a publisher for the resource associated with `identifier`.
 	func resource(for key: K, action: @escaping (K, Future<T, Error>.Promise) -> Void) -> AnyPublisher<T, Error> {
-		// Find already loaded resource - or a publisher in the process of loading...
+		// Find already loaded resource. Or a publisher in the process of loading...
 		if let container = table[key] {
 			if let value = container.value {
 				return Result<T, Error>.success(value)
@@ -46,7 +75,7 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 		private(set) weak var value: T?
 		private(set) var publisher: AnyPublisher<T, Error>?
 		private var cancellable: AnyCancellable!
-		
+
 		init(_ future: Future<T, Error>) {
 			publisher = future
 				.map { value in
@@ -54,11 +83,12 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 					return value
 				}
 				.eraseToAnyPublisher()
-			
+
 			cancellable = publisher!
-				.sink { _ in } receiveValue: { _ in
-					self.publisher = nil
-				}
+				.sink(
+					receiveCompletion: { _ in self.publisher = nil },
+					receiveValue: { _ in self.publisher = nil }
+				)
 		}
 	}
 }

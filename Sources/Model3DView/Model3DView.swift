@@ -61,7 +61,7 @@ public struct Model3DView: ViewRepresentable {
 	// MARK: - Private implementations
 	private func makeView(context: Context) -> SCNView {
 		let view = SCNView()
-		view.antialiasingMode = .multisampling2X
+		view.antialiasingMode = .none
 		view.autoenablesDefaultLighting = true
 		view.backgroundColor = .clear
 		#if os(macOS)
@@ -70,10 +70,11 @@ public struct Model3DView: ViewRepresentable {
 		}
 		#else
 		view.preferredFramesPerSecond = UIScreen.main.maximumFramesPerSecond
+
 		#endif
 
 		context.coordinator.setView(view)
-	
+
 		return view
 	}
 
@@ -125,7 +126,8 @@ extension Model3DView {
 	/// Holds all the state values.
 	public class SceneCoordinator: NSObject {
 
-		/// Keep track of already loaded scenes.
+		// Keeping track of already loaded resources.
+		private static let imagesResources = ResourcesCache<URL, PlatformImage>()
 		private static let sceneResources = AsyncResourcesCache<URL, SCNScene>()
 
 		// MARK: -
@@ -135,7 +137,7 @@ extension Model3DView {
 		
 		private weak var view: SCNView!
 		
-		private var loadCancellable: AnyCancellable?
+		private var loadSceneCancellable: AnyCancellable?
 		private var loadedScene: SCNScene? // Keep a reference for `AsyncResourcesCache`.
 
 		fileprivate var onLoadHandlers: [(ModelLoadState) -> Void] = []
@@ -171,6 +173,7 @@ extension Model3DView {
 			view = sceneView
 			view.delegate = self
 			view.pointOfView = cameraNode
+			view.scene = scene
 		}
 
 		fileprivate func setSceneFile(_ sceneFile: SceneFileType) {
@@ -187,7 +190,7 @@ extension Model3DView {
 			if case .url(let sceneUrl) = sceneFile,
 			   let url = sceneUrl
 			{
-				loadCancellable = SceneCoordinator.sceneResources.resource(for: url) { url, promise in
+				loadSceneCancellable = Self.sceneResources.resource(for: url) { url, promise in
 					do {
 						if ["gltf", "glb"].contains(url.pathExtension.lowercased()) {
 							let source = GLTFSceneSource(url: url, options: nil)
@@ -203,38 +206,38 @@ extension Model3DView {
 						promise(.success(SCNScene()))
 					}
 				}
-				.receive(on: DispatchQueue.main)
 				.sink { _ in } receiveValue: { [weak self] scene in
 					self?.loadedScene = scene
 					self?.prepareScene()
 				}
 			}
 			else if case .reference(let scene) = sceneFile {
-				loadedScene = scene
-				prepareScene()
+				loadSceneCancellable = Just(scene)
+					.receive(on: DispatchQueue.global())
+					.sink { [weak self] scene in
+						self?.loadedScene = scene
+						self?.prepareScene()
+					}
 			}
 		}
 		
 		private func prepareScene() {
-			view.scene = scene
 			contentNode.childNodes.forEach { $0.removeFromParentNode() }
-			
+
 			// Copy the root node(s) of the scene, copy their geometry, and place them in the coordinator's scene.
 			guard let loadedScene = loadedScene else {
 				return
 			}
-			
+
 			let copiedRoot = loadedScene.rootNode.clone()
-			
+
 			// Set the lighting material.
-			let materials = copiedRoot
+			copiedRoot
 				.childNodes { node, _ in node.geometry?.firstMaterial != nil }
-				.compactMap { $0.geometry?.firstMaterial }
-			
-			for material in materials {
-				material.lightingModel = SCNMaterial.LightingModel.physicallyBased
-			}
-			
+				.forEach { node in
+					node.geometry?.firstMaterial?.lightingModel = SCNMaterial.LightingModel.physicallyBased
+				}
+
 			contentNode.addChildNode(copiedRoot)
 
 			// Scale the scene/model to normalized (-1, 1) scale.
@@ -246,7 +249,7 @@ extension Model3DView {
 			contentScale = Float(2 / maxDimension) * 0.8
 			contentCenter = [0, Float(copiedRoot.boundingSphere.center.y) * contentScale, 0]
 			
-			DispatchQueue.main.async { // Redundant?
+			DispatchQueue.main.async {
 				for onLoad in self.onLoadHandlers {
 					onLoad(.success)
 				}
@@ -255,7 +258,7 @@ extension Model3DView {
 
 		// MARK: - Apply new values.
 		/**
-		 * There's currently an issue where these methods may be set pre-maturely - and without effect - before
+		 * There's currently an issue where these methods are called prematurely - and without effect - before
 		 * the scene is actually loaded.
 		 */
 		/// Apply scene transforms.
@@ -272,7 +275,9 @@ extension Model3DView {
 			}
 			
 			if let asset = asset {
-				scene.background.contents = PlatformImage(contentsOf: asset)
+				scene.background.contents = Self.imagesResources.resource(for: asset) { url in
+					PlatformImage(contentsOf: url)!
+				}
 			}
 			else {
 				scene.background.contents = nil
@@ -287,10 +292,10 @@ extension Model3DView {
 				return
 			}
 			
-			if let settings = settings,
-			   let iblImage = PlatformImage(contentsOf: settings.url)
-			{
-				scene.lightingEnvironment.contents = iblImage
+			if let settings = settings {
+				scene.lightingEnvironment.contents = Self.imagesResources.resource(for: settings.url) { url in
+					PlatformImage(contentsOf: url)!
+				}
 				scene.lightingEnvironment.intensity = settings.intensity
 			}
 			else {
@@ -299,7 +304,7 @@ extension Model3DView {
 			
 			ibl = settings
 		}
-		
+
 		// MARK: - Clean up
 		deinit {}
 	}
