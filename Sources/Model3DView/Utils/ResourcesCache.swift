@@ -12,41 +12,42 @@ import Foundation
 /// Resources are loaded asynchronously and kept in memory as long as there's at least one reference.
 /// TODO: Error handling.
 final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
-	private var table: [K : WeakFutureValue<T>] = [:]
+	private var table: [K : WeakFutureValue] = [:]
 
 	/// Returns a publisher for the resource associated with `identifier`.
-	func resource(for key: K, action: @escaping (K, Future<T, Never>.Promise) -> Void) -> AnyPublisher<T, Never> {
-		if let container = table[key],
-			let value = container.value
-		{
-			return Just(value).eraseToAnyPublisher()
-		}
-		else if let container = table[key],
-			let publisher = container.publisher
-		{
-			return publisher
-		}
-		else {
-			let future = Future<T, Never> { promise in
-				DispatchQueue.global().async {
-					action(key, promise)
-				}
+	func resource(for key: K, action: @escaping (K, Future<T, Error>.Promise) -> Void) -> AnyPublisher<T, Error> {
+		// Find already loaded resource - or a publisher in the process of loading...
+		if let container = table[key] {
+			if let value = container.value {
+				return Result<T, Error>.success(value)
+					.publisher
+					.eraseToAnyPublisher()
 			}
-
-			table[key] = WeakFutureValue(future: future)
-
-			return future.eraseToAnyPublisher()
+			else if let publisher = container.publisher {
+				return publisher
+			}
 		}
+
+		// ... otherwise create a new publisher.
+		let future = Future<T, Error> { promise in
+			DispatchQueue.global().async {
+				action(key, promise)
+			}
+		}
+
+		table[key] = WeakFutureValue(future)
+
+		return future.eraseToAnyPublisher()
 	}
 
 	// MARK: - Weak Value container
 	/// This object holds a weak reference to the value as well as a temporary publisher for the Future.
-	private final class WeakFutureValue<Value: AnyObject> {
-		private(set) weak var value: Value?
-		private(set) var publisher: AnyPublisher<Value, Never>?
+	private final class WeakFutureValue {
+		private(set) weak var value: T?
+		private(set) var publisher: AnyPublisher<T, Error>?
 		private var cancellable: AnyCancellable!
 		
-		init(future: Future<Value, Never>) {
+		init(_ future: Future<T, Error>) {
 			publisher = future
 				.map { value in
 					self.value = value
@@ -54,9 +55,10 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 				}
 				.eraseToAnyPublisher()
 			
-			cancellable = publisher!.sink { _ in
-				self.publisher = nil
-			}
+			cancellable = publisher!
+				.sink { _ in } receiveValue: { _ in
+					self.publisher = nil
+				}
 		}
 	}
 }

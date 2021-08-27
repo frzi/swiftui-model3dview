@@ -49,7 +49,11 @@ public struct Model3DView: ViewRepresentable {
 		sceneFile = .url(file)
 	}
 	
-	/// Load a SceneKit scene instance.
+	/// Load 3D assets from a SceneKit scene instance.
+	///
+	/// When passing a SceneKit scene instance to `Model3DView` all the contents will be copied to an internal scene.
+	/// Although geometry data will be shared (an optimization provided by SceneKit), any changes to nodes in the
+	/// given scene will not apply to the scene rendered by `Model3DView`.
 	public init(scene: SCNScene) {
 		sceneFile = .reference(scene)
 	}
@@ -125,9 +129,14 @@ extension Model3DView {
 		private static let sceneResources = AsyncResourcesCache<URL, SCNScene>()
 
 		// MARK: -
-		private var loadCancellable: AnyCancellable?
-		private var scene: SCNScene?
+		private let cameraNode: SCNNode
+		private let contentNode: SCNNode
+		private let scene: SCNScene
+		
 		private weak var view: SCNView!
+		
+		private var loadCancellable: AnyCancellable?
+		private var loadedScene: SCNScene? // Keep a reference for `AsyncResourcesCache`.
 
 		fileprivate var onLoadHandlers: [(ModelLoadState) -> Void] = []
 
@@ -136,25 +145,32 @@ extension Model3DView {
 		private var ibl: IBLValues?
 		private var skybox: URL?
 
-		// Camera
 		fileprivate var camera: Camera?
-		private var cameraNode: SCNNode = {
-			let node = SCNNode()
-			node.name = "Camera Node"
-			node.camera = SCNCamera()
-			return node
-		}()
-
 		private var contentScale: Float = 1
 		private var contentCenter = Vector3()
-		private var contentNode: SCNNode? {
-			scene?.rootNode.childNodes.first { $0 != cameraNode }
+		
+		// MARK: -
+		fileprivate override init() {
+			// Prepare the scene to house the loaded models/content.
+			scene = SCNScene()
+			
+			cameraNode = SCNNode()
+			cameraNode.camera = SCNCamera()
+			cameraNode.name = "Camera parent"
+			scene.rootNode.addChildNode(cameraNode)
+
+			contentNode = SCNNode()
+			contentNode.name = "Content"
+			scene.rootNode.addChildNode(contentNode)
+
+			super.init()
 		}
 
 		// MARK: - Setting scene properties.
 		fileprivate func setView(_ sceneView: SCNView) {
 			view = sceneView
 			view.delegate = self
+			view.pointOfView = cameraNode
 		}
 
 		fileprivate func setSceneFile(_ sceneFile: SceneFileType) {
@@ -167,6 +183,7 @@ extension Model3DView {
 			// Load the scene file/reference.
 			// If an url is given, the scene will be loaded asynchronously via `AsyncResourcesCache`, making sure
 			// only one instance lives in memory and doesn't block the main thread.
+			// TODO: Add error handling...
 			if case .url(let sceneUrl) = sceneFile,
 			   let url = sceneUrl
 			{
@@ -188,45 +205,46 @@ extension Model3DView {
 				}
 				.receive(on: DispatchQueue.main)
 				.sink { _ in } receiveValue: { [weak self] scene in
-					self?.scene = scene
+					self?.loadedScene = scene
 					self?.prepareScene()
 				}
 			}
 			else if case .reference(let scene) = sceneFile {
-				self.scene = scene
+				loadedScene = scene
 				prepareScene()
 			}
 		}
 		
 		private func prepareScene() {
-			scene?.rootNode.addChildNode(cameraNode)
 			view.scene = scene
-			view.pointOfView = cameraNode
+			contentNode.childNodes.forEach { $0.removeFromParentNode() }
 			
-			guard let contentNode = contentNode else {
+			// Copy the root node(s) of the scene, copy their geometry, and place them in the coordinator's scene.
+			guard let loadedScene = loadedScene else {
 				return
 			}
 			
-			// Copy the root node(s) of the scene, copy their geometry, and place them in the coordinator's scene.
-			// ...
+			let copiedRoot = loadedScene.rootNode.clone()
 			
 			// Set the lighting material.
-			let materials = contentNode
+			let materials = copiedRoot
 				.childNodes { node, _ in node.geometry?.firstMaterial != nil }
 				.compactMap { $0.geometry?.firstMaterial }
 			
 			for material in materials {
 				material.lightingModel = SCNMaterial.LightingModel.physicallyBased
 			}
+			
+			contentNode.addChildNode(copiedRoot)
 
 			// Scale the scene/model to normalized (-1, 1) scale.
 			let maxDimension = max(
-				contentNode.boundingBox.max.x - contentNode.boundingBox.min.x,
-				contentNode.boundingBox.max.y - contentNode.boundingBox.min.y,
-				contentNode.boundingBox.max.z - contentNode.boundingBox.min.z
+				copiedRoot.boundingBox.max.x - copiedRoot.boundingBox.min.x,
+				copiedRoot.boundingBox.max.y - copiedRoot.boundingBox.min.y,
+				copiedRoot.boundingBox.max.z - copiedRoot.boundingBox.min.z
 			)
 			contentScale = Float(2 / maxDimension) * 0.8
-			contentCenter = [0, Float(contentNode.boundingSphere.center.y) * contentScale, 0]
+			contentCenter = [0, Float(copiedRoot.boundingSphere.center.y) * contentScale, 0]
 			
 			DispatchQueue.main.async { // Redundant?
 				for onLoad in self.onLoadHandlers {
@@ -242,10 +260,6 @@ extension Model3DView {
 		 */
 		/// Apply scene transforms.
 		fileprivate func setTransform(rotation: Quaternion, scale: Vector3, translate: Vector3) {
-			guard let contentNode = contentNode else {
-				return
-			}
-
 			contentNode.simdOrientation = rotation
 			contentNode.simdScale = scale * contentScale
 			contentNode.simdPosition = translate
@@ -253,7 +267,7 @@ extension Model3DView {
 		
 		/// Set the skybox texture from file.
 		fileprivate func setSkybox(asset: URL?) {
-			guard asset != skybox, let scene = scene else {
+			guard asset != skybox else {
 				return
 			}
 			
@@ -267,11 +281,9 @@ extension Model3DView {
 			skybox = asset
 		}
 		
-		/// Set the image based lighting textures from file.
+		/// Set the image based lighting (IBL) texture and intensity.
 		fileprivate func setIBL(settings: IBLValues?) {
-			guard let scene = scene,
-				  ibl?.url != settings?.url || ibl?.intensity != settings?.intensity
-			else {
+			guard ibl?.url != settings?.url || ibl?.intensity != settings?.intensity else {
 				return
 			}
 			
@@ -289,9 +301,7 @@ extension Model3DView {
 		}
 		
 		// MARK: - Clean up
-		deinit {
-			cameraNode.removeFromParentNode()
-		}
+		deinit {}
 	}
 }
 
@@ -348,4 +358,3 @@ struct Model3DView_Library: LibraryContentProvider {
 		LibraryItem(Model3DView(named: ""), visible: true, title: "Model3D View")
 	}
 }
-
