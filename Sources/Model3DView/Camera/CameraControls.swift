@@ -68,6 +68,8 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 		self.friction = clamp(friction, 0.01, 0.99)
 		
 		// TODO: Set initial `rotation` and `zoom` based on the Camera's values.
+		_zoom = State(initialValue: 2)
+		_rotation = State(initialValue: .zero)
 	}
 
 	// MARK: -

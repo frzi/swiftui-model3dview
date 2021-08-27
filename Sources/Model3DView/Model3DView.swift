@@ -4,6 +4,7 @@
  */
 
 import Combine
+import DeveloperToolsSupport
 import GLTFSceneKit
 import SceneKit
 import SwiftUI
@@ -122,11 +123,10 @@ extension Model3DView {
 
 		/// Keep track of already loaded scenes.
 		private static let sceneResources = AsyncResourcesCache<URL, SCNScene>()
-		private static let textureResources = AsyncResourcesCache<URL, PlatformImage>()
 
 		// MARK: -
 		private var loadCancellable: AnyCancellable?
-		private weak var scene: SCNScene?
+		private var scene: SCNScene?
 		private weak var view: SCNView!
 
 		fileprivate var onLoadHandlers: [(ModelLoadState) -> Void] = []
@@ -170,17 +170,20 @@ extension Model3DView {
 			if case .url(let sceneUrl) = sceneFile,
 			   let url = sceneUrl
 			{
-				loadCancellable = SceneCoordinator.sceneResources.resource(for: url) { url in
-					if ["gltf", "glb"].contains(url.pathExtension.lowercased()) {
-						let source = GLTFSceneSource(url: url, options: nil)
-						let scene = try! source.scene()
-						return scene
+				loadCancellable = SceneCoordinator.sceneResources.resource(for: url) { url, promise in
+					do {
+						if ["gltf", "glb"].contains(url.pathExtension.lowercased()) {
+							let source = GLTFSceneSource(url: url, options: nil)
+							let scene = try source.scene()
+							promise(.success(scene))
+						}
+						else {
+							let scene = try SCNScene(url: url)
+							promise(.success(scene))
+						}
 					}
-					else if let scene = try? SCNScene(url: url) {
-						return scene
-					}
-					else {
-						return SCNScene()
+					catch {
+						promise(.success(SCNScene()))
 					}
 				}
 				.receive(on: DispatchQueue.main)
@@ -203,6 +206,9 @@ extension Model3DView {
 			guard let contentNode = contentNode else {
 				return
 			}
+			
+			// Copy the root node(s) of the scene, copy their geometry, and place them in the coordinator's scene.
+			// ...
 			
 			// Set the lighting material.
 			let materials = contentNode
@@ -251,10 +257,8 @@ extension Model3DView {
 				return
 			}
 			
-			if let asset = asset,
-			   let skyboxImage = PlatformImage(contentsOf: asset)
-			{
-				scene.background.contents = skyboxImage
+			if let asset = asset {
+				scene.background.contents = PlatformImage(contentsOf: asset)
 			}
 			else {
 				scene.background.contents = nil
@@ -336,3 +340,12 @@ extension Model3DView {
 		return view
 	}
 }
+
+// MARK: - Developer Tools
+struct Model3DView_Library: LibraryContentProvider {
+	@LibraryContentBuilder
+	var views: [LibraryItem] {
+		LibraryItem(Model3DView(named: ""), visible: true, title: "Model3D View")
+	}
+}
+

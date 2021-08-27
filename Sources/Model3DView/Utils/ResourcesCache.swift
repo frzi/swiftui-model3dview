@@ -10,17 +10,18 @@ import Foundation
 /// Object keeping track of initialized resources.
 ///
 /// Resources are loaded asynchronously and kept in memory as long as there's at least one reference.
+/// TODO: Error handling.
 final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 	private var table: [K : WeakFutureValue<T>] = [:]
 
 	/// Returns a publisher for the resource associated with `identifier`.
-	func resource(for identifier: K, action: @escaping (K) -> T) -> AnyPublisher<T, Never> {
-		if let container = table[identifier],
+	func resource(for key: K, action: @escaping (K, Future<T, Never>.Promise) -> Void) -> AnyPublisher<T, Never> {
+		if let container = table[key],
 			let value = container.value
 		{
 			return Just(value).eraseToAnyPublisher()
 		}
-		else if let container = table[identifier],
+		else if let container = table[key],
 			let publisher = container.publisher
 		{
 			return publisher
@@ -28,12 +29,11 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 		else {
 			let future = Future<T, Never> { promise in
 				DispatchQueue.global().async {
-					let resource = action(identifier)
-					promise(.success(resource))
+					action(key, promise)
 				}
 			}
 
-			table[identifier] = WeakFutureValue(future: future)
+			table[key] = WeakFutureValue(future: future)
 
 			return future.eraseToAnyPublisher()
 		}

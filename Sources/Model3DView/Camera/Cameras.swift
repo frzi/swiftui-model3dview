@@ -18,22 +18,24 @@ public struct OrthographicCamera: Camera {
 	public var rotation: Quaternion
 	public var near: Float
 	public var far: Float
+	public var scale: Float
 	
 	public init(
 		position: Vector3 = [0, 0, 2],
 		rotation: Quaternion = [0, 0, 0, 1],
-		near: Float = 0.0001,
+		near: Float = 0.1,
 		far: Float = 100
 	) {
 		self.position = position
 		self.rotation = rotation
 		self.near = near
 		self.far = far
+		self.scale = 1
 	}
 	
 	public func projectionMatrix(viewport size: CGSize) -> Matrix4x4 {
-		let ratio = Float(size.width / size.height)
-		return .orthographic(left: -ratio, right: ratio, bottom: -1, top: 1, near: near, far: far)
+		let aspect = Float(size.width / size.height) * scale
+		return .orthographic(left: -aspect, right: aspect, bottom: -scale, top: scale, near: near, far: far)
 	}
 }
 
@@ -49,7 +51,7 @@ public struct PerspectiveCamera: Camera {
 		position: Vector3 = [0, 0, 2],
 		rotation: Quaternion = [0, 0, 0, 2],
 		fov: Angle = .degrees(60),
-		near: Float = 0.0001,
+		near: Float = 0.1,
 		far: Float = 100
 	) {
 		self.position = position
@@ -60,7 +62,7 @@ public struct PerspectiveCamera: Camera {
 	}
 	
 	public func projectionMatrix(viewport size: CGSize) -> Matrix4x4 {
-		let ratio = Float(size.width / size.height)
-		return .perspective(fov: Float(fov.radians), aspect: ratio, near: near, far: far)
+		let aspect = Float(size.width / size.height)
+		return .perspective(fov: Float(fov.radians), aspect: aspect, near: near, far: far)
 	}
 }
