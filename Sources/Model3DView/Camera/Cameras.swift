@@ -13,7 +13,7 @@ public protocol Camera {
 }
 
 /// Camera with orthographic projection.
-public struct OrthographicCamera: Camera {
+public struct OrthographicCamera: Camera, Equatable {
 	public var position: Vector3
 	public var rotation: Quaternion
 	public var near: Float
@@ -40,7 +40,7 @@ public struct OrthographicCamera: Camera {
 }
 
 /// Camera with perspective projection.
-public struct PerspectiveCamera: Camera {
+public struct PerspectiveCamera: Camera, Equatable {
 	public var position: Vector3
 	public var rotation: Quaternion
 	public var fov: Angle

@@ -127,8 +127,8 @@ extension Model3DView {
 	public class SceneCoordinator: NSObject {
 
 		// Keeping track of already loaded resources.
-		private static let imagesResources = ResourcesCache<URL, PlatformImage>()
-		private static let sceneResources = AsyncResourcesCache<URL, SCNScene>()
+		private static let imageCache = ResourcesCache<URL, PlatformImage>()
+		private static let sceneCache = AsyncResourcesCache<URL, SCNScene>()
 
 		// MARK: -
 		private let cameraNode: SCNNode
@@ -190,7 +190,7 @@ extension Model3DView {
 			if case .url(let sceneUrl) = sceneFile,
 			   let url = sceneUrl
 			{
-				loadSceneCancellable = Self.sceneResources.resource(for: url) { url, promise in
+				loadSceneCancellable = Self.sceneCache.resource(for: url) { url, promise in
 					do {
 						if ["gltf", "glb"].contains(url.pathExtension.lowercased()) {
 							let source = GLTFSceneSource(url: url, options: nil)
@@ -267,7 +267,7 @@ extension Model3DView {
 			contentNode.simdScale = scale * contentScale
 			contentNode.simdPosition = translate
 		}
-		
+
 		/// Set the skybox texture from file.
 		fileprivate func setSkybox(asset: URL?) {
 			guard asset != skybox else {
@@ -275,8 +275,8 @@ extension Model3DView {
 			}
 			
 			if let asset = asset {
-				scene.background.contents = Self.imagesResources.resource(for: asset) { url in
-					PlatformImage(contentsOf: url)!
+				scene.background.contents = Self.imageCache.resource(for: asset) { url in
+					PlatformImage(contentsOf: url)
 				}
 			}
 			else {
@@ -292,14 +292,15 @@ extension Model3DView {
 				return
 			}
 			
-			if let settings = settings {
-				scene.lightingEnvironment.contents = Self.imagesResources.resource(for: settings.url) { url in
-					PlatformImage(contentsOf: url)!
-				}
+			if let settings = settings,
+			   let image = Self.imageCache.resource(for: settings.url, action: PlatformImage.init(contentsOf:))
+			{
+				scene.lightingEnvironment.contents = image
 				scene.lightingEnvironment.intensity = settings.intensity
 			}
 			else {
 				scene.lightingEnvironment.contents = nil
+				scene.lightingEnvironment.intensity = 1
 			}
 			
 			ibl = settings
