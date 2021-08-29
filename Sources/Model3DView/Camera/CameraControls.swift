@@ -39,7 +39,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 
 	// Keeping track of gestures.
 	@State private var dragPosition: CGPoint?
-	@State private var zoomPosition: CGFloat = 1
+	@State private var zoomPosition: CGFloat = 3
 	@State private var velocityPan: CGPoint = .zero
 	@State private var velocityZoom: CGFloat = 0
 
@@ -120,6 +120,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 		camera.wrappedValue.position.x = Float(zoom * -sin(theta) * cos(phi))
 		camera.wrappedValue.position.y = Float(zoom * -sin(phi))
 		camera.wrappedValue.position.z = Float(-zoom * cos(theta) * cos(phi))
+		camera.wrappedValue.lookAt(center: [0, 0.0001, 0])
 		
 		let epsilon: CGFloat = 0.0001
 		isAnimating = abs(velocityPan.x) > epsilon || abs(velocityPan.y) > epsilon || abs(velocityZoom) > epsilon

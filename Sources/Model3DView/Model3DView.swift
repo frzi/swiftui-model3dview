@@ -53,7 +53,7 @@ public struct Model3DView: ViewRepresentable {
 	///
 	/// When passing a SceneKit scene instance to `Model3DView` all the contents will be copied to an internal scene.
 	/// Although geometry data will be shared (an optimization provided by SceneKit), any changes to nodes in the
-	/// given scene will not apply to the scene rendered by `Model3DView`.
+	/// original scene will not apply to the scene rendered by `Model3DView`.
 	public init(scene: SCNScene) {
 		sceneFile = .reference(scene)
 	}
@@ -149,7 +149,6 @@ extension Model3DView {
 
 		fileprivate var camera: Camera?
 		private var contentScale: Float = 1
-		private var contentCenter = Vector3()
 		
 		// MARK: -
 		fileprivate override init() {
@@ -232,11 +231,13 @@ extension Model3DView {
 			let copiedRoot = loadedScene.rootNode.clone()
 
 			// Set the lighting material.
+			/*
 			copiedRoot
 				.childNodes { node, _ in node.geometry?.firstMaterial != nil }
 				.forEach { node in
 					node.geometry?.firstMaterial?.lightingModel = SCNMaterial.LightingModel.physicallyBased
 				}
+			 */
 
 			contentNode.addChildNode(copiedRoot)
 
@@ -246,8 +247,7 @@ extension Model3DView {
 				copiedRoot.boundingBox.max.y - copiedRoot.boundingBox.min.y,
 				copiedRoot.boundingBox.max.z - copiedRoot.boundingBox.min.z
 			)
-			contentScale = Float(2 / maxDimension) * 0.8
-			contentCenter = [0, Float(copiedRoot.boundingSphere.center.y) * contentScale, 0]
+			contentScale = Float(2 / maxDimension)
 			
 			DispatchQueue.main.async {
 				for onLoad in self.onLoadHandlers {
@@ -320,10 +320,12 @@ extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 		if let camera = camera {
 			let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
 			cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
-
-			cameraNode.simdPosition = camera.position + contentCenter + [0, 0.0001, 0]
+			
+			cameraNode.simdPosition = camera.position
 			cameraNode.simdOrientation = camera.rotation
-			cameraNode.simdLook(at: contentCenter) // Replace with above.
+			
+//			let viewMatrix = Matrix4x4.lookAt(eye: camera.position + contentCenter, target: contentCenter, up: [0, 1, 0])
+//			cameraNode.simdTransform = viewMatrix
 		}
 	}
 }
