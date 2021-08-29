@@ -141,14 +141,18 @@ extension Model3DView {
 		private var loadedScene: SCNScene? // Keep a reference for `AsyncResourcesCache`.
 
 		fileprivate var onLoadHandlers: [(ModelLoadState) -> Void] = []
-
+		
 		// Properties for diffing.
 		private var sceneFile: SceneFileType?
 		private var ibl: IBLValues?
 		private var skybox: URL?
 
-		fileprivate var camera: Camera?
+		// Instead of using the `.simdPosition` and `.simdOrientation` properties, use a transform matrix instead.
+		// We want to depend on as little SceneKit features as possible.
+		private var transform = Matrix4x4.identity
+
 		private var contentScale: Float = 1
+		fileprivate var camera: Camera?
 		
 		// MARK: -
 		fileprivate override init() {
@@ -239,8 +243,6 @@ extension Model3DView {
 				}
 			 */
 
-			contentNode.addChildNode(copiedRoot)
-
 			// Scale the scene/model to normalized (-1, 1) scale.
 			let maxDimension = max(
 				copiedRoot.boundingBox.max.x - copiedRoot.boundingBox.min.x,
@@ -248,6 +250,8 @@ extension Model3DView {
 				copiedRoot.boundingBox.max.z - copiedRoot.boundingBox.min.z
 			)
 			contentScale = Float(2 / maxDimension)
+			
+			contentNode.addChildNode(copiedRoot)
 			
 			DispatchQueue.main.async {
 				for onLoad in self.onLoadHandlers {
@@ -263,9 +267,7 @@ extension Model3DView {
 		 */
 		/// Apply scene transforms.
 		fileprivate func setTransform(rotation: Quaternion, scale: Vector3, translate: Vector3) {
-			contentNode.simdOrientation = rotation
-			contentNode.simdScale = scale * contentScale
-			contentNode.simdPosition = translate
+			transform = Matrix4x4(scale: scale) * Matrix4x4(translation: translate) * Matrix4x4(rotation)
 		}
 
 		/// Set the skybox texture from file.
@@ -317,15 +319,16 @@ extension Model3DView {
  */
 extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
+		// Update the camera.
 		if let camera = camera {
 			let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
 			cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
-			
-			// Instead of using the `.simdPosition` and `.simdOrientation` properties, create a transform
-			// matrix instead. We want to depend on as little SceneKit features as possible.
-			let transform = Matrix4x4(translation: camera.position) * Matrix4x4(camera.rotation)
-			cameraNode.simdTransform = transform
+
+			let cameraTransform = Matrix4x4(translation: camera.position) * Matrix4x4(camera.rotation)
+			cameraNode.simdTransform = cameraTransform
 		}
+		
+		contentNode.simdTransform = Matrix4x4(scale: Vector3(repeating: contentScale)) * transform
 	}
 }
 

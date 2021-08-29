@@ -5,6 +5,7 @@
 
 import DisplayLink
 import SwiftUI
+import simd
 
 public protocol CameraControls {}
 
@@ -35,7 +36,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	
 	// Values to apply to the camera.
 	@State private var rotation = CGPoint()
-	@State private var zoom: CGFloat = 2
+	@State private var distance: CGFloat = 50
 
 	// Keeping track of gestures.
 	@State private var dragPosition: CGPoint?
@@ -68,8 +69,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 		self.friction = clamp(friction, 0.01, 0.99)
 		
 		// TODO: Set initial `rotation` and `zoom` based on the Camera's values.
-		_zoom = State(initialValue: 2)
-		_rotation = State(initialValue: .zero)
+		_distance = State(initialValue: CGFloat(length(camera.wrappedValue.position)))
 	}
 
 	// MARK: -
@@ -113,13 +113,13 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	private func tick(frame: DisplayLink.Frame? = nil) {		
 		rotation.x = clamp(rotation.x + velocityPan.x, minYaw.degrees, maxYaw.degrees)
 		rotation.y = clamp(rotation.y + velocityPan.y, minPitch.degrees, maxPitch.degrees)
-		zoom = clamp(zoom + velocityZoom, minZoom, maxZoom)
+		distance = clamp(distance + velocityZoom, minZoom, maxZoom)
 		
 		let theta = rotation.x * (.pi / 180)
 		let phi = rotation.y * (.pi / 180)
-		camera.wrappedValue.position.x = Float(zoom * -sin(theta) * cos(phi))
-		camera.wrappedValue.position.y = Float(zoom * -sin(phi))
-		camera.wrappedValue.position.z = Float(-zoom * cos(theta) * cos(phi))
+		camera.wrappedValue.position.x = Float(distance * -sin(theta) * cos(phi))
+		camera.wrappedValue.position.y = Float(distance * -sin(phi))
+		camera.wrappedValue.position.z = Float(-distance * cos(theta) * cos(phi))
 		camera.wrappedValue.lookAt(center: [0, 0.0001, 0])
 		
 		let epsilon: CGFloat = 0.0001

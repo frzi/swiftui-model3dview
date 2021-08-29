@@ -36,6 +36,15 @@ extension Matrix4x4 {
 		[0, 0, 1, 0],
 		[0, 0, 0, 1]
 	)
+	
+	public init(scale: Vector3) {
+		self.init(
+			[scale.x, 0, 0, 0],
+			[0, scale.y, 0, 0],
+			[0, 0, scale.z, 0],
+			[0, 0, 0, 1]
+		)
+	}
 
 	public init(translation vec: Vector3) {
 		self.init(
