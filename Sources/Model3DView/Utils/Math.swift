@@ -46,6 +46,8 @@ extension Matrix4x4 {
 		)
 	}
 	
+	// MARK: Extras
+	/// Orthographic projection matrix.
 	@inlinable
 	public static func orthographic(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) -> Matrix4x4 {
 		let lr = 1 / (left - right)
@@ -59,11 +61,16 @@ extension Matrix4x4 {
 		)
 	}
 
+	/// Perspective projection matrix.
+	///
+	/// - Parameter fov: Field of fiew in radians.
+	/// - Parameter aspect: Aspect ratio of the view.
+	/// - Parameter near: Lowest Z value.
+	/// - Parameter far: Highest Z value.
 	@inlinable
 	public static func perspective(fov: Float, aspect: Float, near: Float, far: Float) -> Matrix4x4 {
 		let f = 1 / tan(fov * 0.5)
 		let nf = 1 / (near - far)
-
 		return Matrix4x4(
 			[f / aspect, 0, 0, 0],
 			[0, f, 0, 0],

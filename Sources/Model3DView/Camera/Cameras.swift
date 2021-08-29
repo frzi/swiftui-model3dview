@@ -16,7 +16,7 @@ public protocol Camera {
 
 extension Camera {
 	/// Adjust the camera to orient towards `center`.
-	mutating func lookAt(center: Vector3, up: Vector3 = [0, 1, 0]) {
+	public mutating func lookAt(center: Vector3, up: Vector3 = [0, 1, 0]) {
 		let m = Matrix4x4.lookAt(eye: position, target: center, up: up)
 		let mat3 = Matrix3x3(
 			[m.columns.0.x, m.columns.0.y, m.columns.0.z],
@@ -27,7 +27,7 @@ extension Camera {
 	}
 	
 	/// Return a copy of the camera oriented towards `center`.
-	func lookingAt(center: Vector3, up: Vector3 = [0, 1, 0]) -> Self {
+	public func lookingAt(center: Vector3, up: Vector3 = [0, 1, 0]) -> Self {
 		var copy = self
 		copy.lookAt(center: center, up: up)
 		return copy
@@ -73,7 +73,7 @@ public struct PerspectiveCamera: Camera, Equatable {
 	
 	public init(
 		position: Vector3 = [0, 0, 2],
-		rotation: Quaternion = [0, 0, 0, 2],
+		rotation: Quaternion = [0, 0, 0, 1],
 		fov: Angle = .degrees(60),
 		near: Float = 0.1,
 		far: Float = 100

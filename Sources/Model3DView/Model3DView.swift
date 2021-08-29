@@ -321,8 +321,10 @@ extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 			let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
 			cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
 			
-			cameraNode.simdPosition = camera.position
-			cameraNode.simdOrientation = camera.rotation
+			// Instead of using the `.simdPosition` and `.simdOrientation` properties, create a transform
+			// matrix instead. We want to depend on as little SceneKit features as possible.
+			let transform = Matrix4x4(translation: camera.position) * Matrix4x4(camera.rotation)
+			cameraNode.simdTransform = transform
 		}
 	}
 }
@@ -360,6 +362,6 @@ extension Model3DView {
 struct Model3DView_Library: LibraryContentProvider {
 	@LibraryContentBuilder
 	var views: [LibraryItem] {
-		LibraryItem(Model3DView(named: ""), visible: true, title: "Model3D View")
+		LibraryItem(Model3DView(named: "model.gltf"), visible: true, title: "Model3D View")
 	}
 }
