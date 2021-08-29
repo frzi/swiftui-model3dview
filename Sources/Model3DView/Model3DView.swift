@@ -323,9 +323,6 @@ extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 			
 			cameraNode.simdPosition = camera.position
 			cameraNode.simdOrientation = camera.rotation
-			
-//			let viewMatrix = Matrix4x4.lookAt(eye: camera.position + contentCenter, target: contentCenter, up: [0, 1, 0])
-//			cameraNode.simdTransform = viewMatrix
 		}
 	}
 }
