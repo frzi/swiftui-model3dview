@@ -23,10 +23,7 @@ extension Camera {
 			[m.columns.1.x, m.columns.1.y, m.columns.1.z],
 			[m.columns.2.x, m.columns.2.y, m.columns.2.z]
 		)
-		rotation = Quaternion.fromMatrix3x3(mat3)
-		
-		// TODO: find out why the hell `real` is flipped.
-		rotation.real = -rotation.real
+		rotation = Quaternion(mat3)
 	}
 	
 	/// Return a copy of the camera oriented towards `center`.
