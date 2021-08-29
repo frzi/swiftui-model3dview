@@ -102,3 +102,36 @@ extension Matrix4x4 {
 		)
 	}
 }
+
+// MARK: - Vector2 utilities
+extension Vector2: ExpressibleByFloatLiteral, ExpressibleByIntegerLiteral {
+	public init(floatLiteral value: Float) {
+		self.init(repeating: value)
+	}
+
+	public init(integerLiteral value: Int) {
+		self.init(repeating: Float(value))
+	}
+}
+
+// MARK: - Vector3 utilities
+extension Vector3: ExpressibleByFloatLiteral, ExpressibleByIntegerLiteral {
+	public init(floatLiteral value: Float) {
+		self.init(repeating: value)
+	}
+
+	public init(integerLiteral value: Int) {
+		self.init(repeating: Float(value))
+	}
+}
+
+// MARK: - Vector4 utilities
+extension Vector4: ExpressibleByFloatLiteral, ExpressibleByIntegerLiteral {
+	public init(floatLiteral value: Float) {
+		self.init(repeating: value)
+	}
+
+	public init(integerLiteral value: Int) {
+		self.init(repeating: Float(value))
+	}
+}

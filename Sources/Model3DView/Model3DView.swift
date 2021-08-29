@@ -131,9 +131,9 @@ extension Model3DView {
 		private static let sceneCache = AsyncResourcesCache<URL, SCNScene>()
 
 		// MARK: -
-		private let cameraNode: SCNNode
-		private let contentNode: SCNNode
-		private let scene: SCNScene
+		private let cameraNode = SCNNode()
+		private let contentNode = SCNNode()
+		private let scene = SCNScene()
 		
 		private weak var view: SCNView!
 		
@@ -152,19 +152,15 @@ extension Model3DView {
 		private var transform = Matrix4x4.identity
 
 		private var contentScale: Float = 1
-		fileprivate var camera: Camera?
+		fileprivate var camera: Camera = PerspectiveCamera()
 		
 		// MARK: -
 		fileprivate override init() {
 			// Prepare the scene to house the loaded models/content.
-			scene = SCNScene()
-			
-			cameraNode = SCNNode()
 			cameraNode.camera = SCNCamera()
 			cameraNode.name = "Camera parent"
 			scene.rootNode.addChildNode(cameraNode)
 
-			contentNode = SCNNode()
 			contentNode.name = "Content"
 			scene.rootNode.addChildNode(contentNode)
 
@@ -307,9 +303,6 @@ extension Model3DView {
 			
 			ibl = settings
 		}
-
-		// MARK: - Clean up
-		deinit {}
 	}
 }
 
@@ -319,16 +312,15 @@ extension Model3DView {
  */
 extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
-		// Update the camera.
-		if let camera = camera {
-			let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
-			cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
-
-			let cameraTransform = Matrix4x4(translation: camera.position) * Matrix4x4(camera.rotation)
-			cameraNode.simdTransform = cameraTransform
-		}
-		
+		// Update the content node.
 		contentNode.simdTransform = Matrix4x4(scale: Vector3(repeating: contentScale)) * transform
+		
+		// Update the camera.
+		let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
+		cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
+
+		let cameraTransform = Matrix4x4(translation: camera.position) * Matrix4x4(camera.rotation)
+		cameraNode.simdTransform = cameraTransform
 	}
 }
 
