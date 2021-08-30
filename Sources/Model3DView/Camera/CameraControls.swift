@@ -16,7 +16,7 @@ public protocol CameraControls {}
 /// ```swift
 /// @State var camera = PerspectiveCamera()
 /// // etc ...
-/// Model3DView("bunny.gltf")
+/// Model3DView(named: "bunny.gltf")
 /// 	.cameraControls(OrbitCamera(camera: $camera))
 /// ```
 ///
@@ -40,7 +40,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 
 	// Keeping track of gestures.
 	@State private var dragPosition: CGPoint?
-	@State private var zoomPosition: CGFloat = 3
+	@State private var zoomPosition: CGFloat = 1
 	@State private var velocityPan: CGPoint = .zero
 	@State private var velocityZoom: CGFloat = 0
 
@@ -49,7 +49,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	// MARK: -
 	public init(
 		camera: Binding<C>,
-		sensitivity: CGFloat = 1,
+		sensitivity: CGFloat = 0.5,
 		minPitch: Angle = .degrees(-89.9),
 		maxPitch: Angle = .degrees(89.9),
 		minYaw: Angle = .degrees(-.infinity),

@@ -16,7 +16,7 @@ public protocol Camera {
 
 extension Camera {
 	/// Adjust the camera to orient towards `center`.
-	public mutating func lookAt(center: Vector3, up: Vector3 = [0, 1, 0]) {
+	mutating func lookAt(center: Vector3, up: Vector3 = [0, 1, 0]) {
 		let m = Matrix4x4.lookAt(eye: position, target: center, up: up)
 		let mat3 = Matrix3x3(
 			[m.columns.0.x, m.columns.0.y, m.columns.0.z],

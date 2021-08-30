@@ -27,7 +27,7 @@ import SwiftUI
 ///
 /// - Important: Keep the number of `Model3DView`s simultaneously on screen to a minimum.
 public struct Model3DView: ViewRepresentable {
-	
+
 	private let sceneFile: SceneFileType
 
 	// Settable properties via view modifiers.
@@ -46,6 +46,7 @@ public struct Model3DView: ViewRepresentable {
 	
 	/// Load a 3D asset from a file URL.
 	public init(file: URL) {
+		precondition(file.isFileURL, "Given URL is not a file URL.")
 		sceneFile = .url(file)
 	}
 	
@@ -54,6 +55,21 @@ public struct Model3DView: ViewRepresentable {
 	/// When passing a SceneKit scene instance to `Model3DView` all the contents will be copied to an internal scene.
 	/// Although geometry data will be shared (an optimization provided by SceneKit), any changes to nodes in the
 	/// original scene will not apply to the scene rendered by `Model3DView`.
+	///
+	/// - Important: It is important pass an already initialized instance of `SCNScene`.
+	/// ```swift
+	/// // ❌ Bad
+	/// var body: some View {
+	/// 	Model3DView(scene: SCNScene(named: "myscene")!)
+	/// }
+	///
+	/// // ✅ Good
+	/// static var scene = SCNScene(named: "myscene")!
+	///
+	/// var body: some View {
+	/// 	Model3DView(scene: Self.scene)
+	/// }
+	/// ```
 	public init(scene: SCNScene) {
 		sceneFile = .reference(scene)
 	}
@@ -61,17 +77,27 @@ public struct Model3DView: ViewRepresentable {
 	// MARK: - Private implementations
 	private func makeView(context: Context) -> SCNView {
 		let view = SCNView()
-		view.antialiasingMode = .none
 		view.autoenablesDefaultLighting = true
 		view.backgroundColor = .clear
+		
+		// Framerate
 		#if os(macOS)
 		if #available(macOS 12, *) {
-			view.preferredFramesPerSecond = view.window?.screen?.maximumFramesPerSecond ?? view.preferredFramesPerSecond
+			view.preferredFramesPerSecond = NSScreen.main?.maximumFramesPerSecond ?? view.preferredFramesPerSecond
 		}
 		#else
 		view.preferredFramesPerSecond = UIScreen.main.maximumFramesPerSecond
-
 		#endif
+		
+		// Anti-aliasing.
+		// If the screen's pixel ratio is above 1 we disable anti-aliasing. Otherwise use MSAAx2.
+		#if os(macOS)
+		let screenScale = NSScreen.main?.backingScaleFactor ?? 1
+		#else
+		let screenScale = UIScreen.main.scale
+		#endif
+		
+		view.antialiasingMode = screenScale > 1 ? .none : .multisampling2X
 
 		context.coordinator.setView(view)
 
@@ -234,14 +260,15 @@ extension Model3DView {
 
 			let copiedRoot = loadedScene.rootNode.clone()
 
-			// Set the lighting material.
-			/*
+			// Copy the materials.
 			copiedRoot
 				.childNodes { node, _ in node.geometry?.firstMaterial != nil }
 				.forEach { node in
-					node.geometry?.firstMaterial?.lightingModel = SCNMaterial.LightingModel.physicallyBased
+					//node.geometry?.firstMaterial?.lightingModel = SCNMaterial.LightingModel.physicallyBased
+					if let copiedGeometry = node.geometry?.copy() as? SCNGeometry {
+						node.geometry = copiedGeometry
+					}
 				}
-			 */
 
 			// Scale the scene/model to normalized (-1, 1) scale.
 			let maxDimension = max(
