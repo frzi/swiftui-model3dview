@@ -152,13 +152,17 @@ extension Model3DView {
 		private var transform = Matrix4x4.identity
 
 		private var contentScale: Float = 1
-		fileprivate var camera: Camera = PerspectiveCamera()
+		fileprivate var camera: Camera = PerspectiveCamera() {
+			didSet {
+				cameraNode.camera?.name = String(describing: type(of: camera))
+			}
+		}
 		
 		// MARK: -
 		fileprivate override init() {
 			// Prepare the scene to house the loaded models/content.
 			cameraNode.camera = SCNCamera()
-			cameraNode.name = "Camera parent"
+			cameraNode.name = "Camera"
 			scene.rootNode.addChildNode(cameraNode)
 
 			contentNode.name = "Content"
@@ -243,8 +247,7 @@ extension Model3DView {
 			let maxDimension = max(
 				copiedRoot.boundingBox.max.x - copiedRoot.boundingBox.min.x,
 				copiedRoot.boundingBox.max.y - copiedRoot.boundingBox.min.y,
-				copiedRoot.boundingBox.max.z - copiedRoot.boundingBox.min.z
-			)
+				copiedRoot.boundingBox.max.z - copiedRoot.boundingBox.min.z)
 			contentScale = Float(2 / maxDimension)
 			
 			contentNode.addChildNode(copiedRoot)

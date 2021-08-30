@@ -56,6 +56,10 @@ extension Matrix4x4 {
 	}
 	
 	// MARK: Extras
+	/**
+	 * Note: Most of these methods will be right-handed due to SceneKit's coordinate system. If (or when) Model3DView
+	 * moves to a custom Metal-based render engine these will need to be switched with left-handed methods.
+	 */
 	/// Orthographic projection matrix.
 	@inlinable
 	public static func orthographic(left: Float, right: Float, bottom: Float, top: Float, near: Float, far: Float) -> Matrix4x4 {
