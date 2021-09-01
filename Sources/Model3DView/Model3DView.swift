@@ -91,6 +91,7 @@ public struct Model3DView: ViewRepresentable {
 		
 		// Anti-aliasing.
 		// If the screen's pixel ratio is above 1 we disable anti-aliasing. Otherwise use MSAAx2.
+		// This may become a view modifier at some point instead.
 		#if os(macOS)
 		let screenScale = NSScreen.main?.backingScaleFactor ?? 1
 		#else
@@ -99,6 +100,7 @@ public struct Model3DView: ViewRepresentable {
 		
 		view.antialiasingMode = screenScale > 1 ? .none : .multisampling2X
 
+		context.coordinator.camera = context.environment.camera
 		context.coordinator.setView(view)
 
 		return view
@@ -160,9 +162,9 @@ extension Model3DView {
 		private let cameraNode = SCNNode()
 		private let contentNode = SCNNode()
 		private let scene = SCNScene()
-		
+
 		private weak var view: SCNView!
-		
+
 		private var loadSceneCancellable: AnyCancellable?
 		private var loadedScene: SCNScene? // Keep a reference for `AsyncResourcesCache`.
 
@@ -178,7 +180,7 @@ extension Model3DView {
 		private var transform = Matrix4x4.identity
 
 		private var contentScale: Float = 1
-		fileprivate var camera: Camera = PerspectiveCamera() {
+		fileprivate var camera: Camera! {
 			didSet {
 				cameraNode.camera?.name = String(describing: type(of: camera))
 			}
@@ -264,10 +266,7 @@ extension Model3DView {
 			copiedRoot
 				.childNodes { node, _ in node.geometry?.firstMaterial != nil }
 				.forEach { node in
-					//node.geometry?.firstMaterial?.lightingModel = SCNMaterial.LightingModel.physicallyBased
-					if let copiedGeometry = node.geometry?.copy() as? SCNGeometry {
-						node.geometry = copiedGeometry
-					}
+					node.geometry = node.geometry?.copy() as? SCNGeometry
 				}
 
 			// Scale the scene/model to normalized (-1, 1) scale.
