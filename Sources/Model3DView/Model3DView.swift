@@ -31,6 +31,7 @@ public struct Model3DView: ViewRepresentable {
 	private let sceneFile: SceneFileType
 
 	// Settable properties via view modifiers.
+	// TODO: Considering these are private perhaps replace this with a single transform matrix.
 	private var rotation: Quaternion = [0, 0, 0, 1]
 	private var scale: Vector3 = [1, 1, 1]
 	private var translate: Vector3 = [0, 0, 0]
@@ -46,7 +47,9 @@ public struct Model3DView: ViewRepresentable {
 	
 	/// Load a 3D asset from a file URL.
 	public init(file: URL) {
+		#if DEBUG
 		precondition(file.isFileURL, "Given URL is not a file URL.")
+		#endif
 		sceneFile = .url(file)
 	}
 	
@@ -153,6 +156,10 @@ extension Model3DView {
 extension Model3DView {
 	/// Holds all the state values.
 	public class SceneCoordinator: NSObject {
+		
+		private enum LoadError: Error {
+			case unableToLoad
+		}
 
 		// Keeping track of already loaded resources.
 		private static let imageCache = ResourcesCache<URL, PlatformImage>()
@@ -185,7 +192,7 @@ extension Model3DView {
 				cameraNode.camera?.name = String(describing: type(of: camera))
 			}
 		}
-		
+
 		// MARK: -
 		fileprivate override init() {
 			// Prepare the scene to house the loaded models/content.
@@ -234,10 +241,18 @@ extension Model3DView {
 						}
 					}
 					catch {
-						promise(.success(SCNScene()))
+						promise(.failure(LoadError.unableToLoad))
 					}
 				}
-				.sink { _ in } receiveValue: { [weak self] scene in
+				.sink { completion in
+					if case .failure(_) = completion {
+						DispatchQueue.main.async {
+							for onLoad in self.onLoadHandlers {
+								onLoad(.error)
+							}
+						}
+					}
+				} receiveValue: { [weak self] scene in
 					self?.loadedScene = scene
 					self?.prepareScene()
 				}
@@ -286,10 +301,6 @@ extension Model3DView {
 		}
 
 		// MARK: - Apply new values.
-		/**
-		 * There's currently an issue where these methods are called prematurely - and without effect - before
-		 * the scene is actually loaded.
-		 */
 		/// Apply scene transforms.
 		fileprivate func setTransform(rotation: Quaternion, scale: Vector3, translate: Vector3) {
 			transform = Matrix4x4(scale: scale) * Matrix4x4(translation: translate) * Matrix4x4(rotation)
@@ -342,7 +353,7 @@ extension Model3DView {
 extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
 		// Update the content node.
-		contentNode.simdTransform = Matrix4x4(scale: Vector3(repeating: contentScale)) * transform
+		contentNode.simdTransform = Matrix4x4(scale: [contentScale, contentScale, contentScale]) * transform
 		
 		// Update the camera.
 		let projection = camera.projectionMatrix(viewport: view.currentViewport.size)

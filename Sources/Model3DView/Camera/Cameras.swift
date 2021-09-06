@@ -34,6 +34,16 @@ extension Camera {
 	}
 }
 
+// MARK: - Camera view modifier
+extension View {
+	/// Sets the default camera.
+	public func camera<C: Camera>(_ camera: C) -> some View {
+		environment(\.camera, camera)
+		//modifier(CameraModifier(camera: camera))
+	}
+}
+
+
 // MARK: - Camera types
 /// Camera with orthographic projection.
 public struct OrthographicCamera: Camera, Equatable {
@@ -90,3 +100,4 @@ public struct PerspectiveCamera: Camera, Equatable {
 		return .perspective(fov: Float(fov.radians), aspect: aspect, near: near, far: far)
 	}
 }
+

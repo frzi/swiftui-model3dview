@@ -22,7 +22,7 @@ public protocol CameraControls {}
 ///
 /// ## Zooming
 /// Zooming is done by moving the camera on its local Z axis, opposed to increasing and decreasing the FOV.
-public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
+public struct OrbitControls<C: Camera>: CameraControls, ViewModifier {
 
 	public var camera: Binding<C>
 	public private(set) var sensitivity: CGFloat
@@ -33,6 +33,8 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 	public var minZoom: CGFloat
 	public var maxZoom: CGFloat
 	public private(set) var friction: CGFloat
+
+	private let center: Vector3 = [0, 0, 0]
 	
 	// Values to apply to the camera.
 	@State private var rotation = CGPoint()
@@ -120,7 +122,7 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 		camera.wrappedValue.position.x = Float(distance * -sin(theta) * cos(phi))
 		camera.wrappedValue.position.y = Float(distance * -sin(phi))
 		camera.wrappedValue.position.z = Float(-distance * cos(theta) * cos(phi))
-		camera.wrappedValue.lookAt(center: [0, 0.0001, 0])
+		camera.wrappedValue.lookAt(center: center)
 		
 		let epsilon: CGFloat = 0.0001
 		isAnimating = abs(velocityPan.x) > epsilon || abs(velocityPan.y) > epsilon || abs(velocityZoom) > epsilon
@@ -136,8 +138,8 @@ public struct OrbitCamera<C: Camera>: CameraControls, ViewModifier {
 		content
 			.gesture(dragGesture)
 			.gesture(pinchGesture)
-			.environment(\.camera, camera.wrappedValue)
 			.onAppear { tick() }
+			.camera(camera.wrappedValue)
 			.onFrame(isActive: isAnimating, tick)
 	}
 }

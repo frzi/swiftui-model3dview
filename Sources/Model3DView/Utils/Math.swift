@@ -139,3 +139,30 @@ extension Vector4: ExpressibleByFloatLiteral, ExpressibleByIntegerLiteral {
 		self.init(repeating: Float(value))
 	}
 }
+
+// MARK: - Additive / vector arithemtic
+extension SIMD3: AdditiveArithmetic where Scalar: FloatingPoint {}
+
+extension Vector3: VectorArithmetic {
+	public mutating func scale(by rhs: Double) {
+		self *= Float(rhs)
+	}
+	
+	public var magnitudeSquared: Double {
+		Double(x * x + y * y + z * z)
+	}
+}
+
+extension Quaternion: VectorArithmetic {
+	public mutating func scale(by rhs: Double) {
+		self *= Float(rhs)
+	}
+	
+	public var magnitudeSquared: Double {
+		Double(imag.x * imag.x + imag.y * imag.y + imag.z * imag.z)
+	}
+	
+	public static var zero: simd_quatf {
+		[0, 0, 0, 1]
+	}
+}

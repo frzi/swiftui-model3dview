@@ -5,13 +5,7 @@
 
 import SwiftUI
 
-// MARK: - Modifiers.
 extension View {
-	/// Sets the default camera.
-	public func camera(_ camera: Camera) -> some View {
-		environment(\.camera, camera)
-	}
-	
 	// MARK: - Scene IBL
 	/// Sets the default Image Based Lighting (IBL) image from a file URL.
 	///
