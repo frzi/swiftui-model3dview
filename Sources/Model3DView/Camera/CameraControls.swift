@@ -1,6 +1,6 @@
 /*
  * CameraControls.swift
- * Created by Freek Zijlmans on 08-08-2021.
+ * Created by Freek (github.com/frzi) on 08-08-2021.
  */
 
 import DisplayLink
@@ -112,7 +112,7 @@ public struct OrbitControls<C: Camera>: CameraControls, ViewModifier {
 	}
 
 	// Updating the camera and other values at a per-tick rate.
-	private func tick(frame: DisplayLink.Frame? = nil) {		
+	private func tick(frame: DisplayLink.Frame? = nil) {
 		rotation.x = clamp(rotation.x + velocityPan.x, minYaw.degrees, maxYaw.degrees)
 		rotation.y = clamp(rotation.y + velocityPan.y, minPitch.degrees, maxPitch.degrees)
 		distance = clamp(distance + velocityZoom, minZoom, maxZoom)

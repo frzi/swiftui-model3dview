@@ -1,6 +1,6 @@
 /*
  * Model3DView.swift
- * Created by Freek Zijlmans on 08-08-2021.
+ * Created by Freek (github.com/frzi) on 08-08-2021.
  */
 
 import Combine
@@ -32,6 +32,7 @@ public struct Model3DView: ViewRepresentable {
 
 	// Settable properties via view modifiers.
 	// TODO: Considering these are private perhaps replace this with a single transform matrix.
+	private var euler: Vector3 = [0, 0, 0]
 	private var rotation: Quaternion = [0, 0, 0, 1]
 	private var scale: Vector3 = [1, 1, 1]
 	private var translate: Vector3 = [0, 0, 0]
@@ -46,11 +47,13 @@ public struct Model3DView: ViewRepresentable {
 	}
 	
 	/// Load a 3D asset from a file URL.
-	public init(file: URL) {
+	public init(file: URL, euler: Vector3 = 0, translate: Vector3 = 0) {
 		#if DEBUG
 		precondition(file.isFileURL, "Given URL is not a file URL.")
 		#endif
 		sceneFile = .url(file)
+		self.euler = euler
+		self.translate = translate
 	}
 	
 	/// Load 3D assets from a SceneKit scene instance.
@@ -86,7 +89,7 @@ public struct Model3DView: ViewRepresentable {
 		// Framerate
 		#if os(macOS)
 		if #available(macOS 12, *) {
-			view.preferredFramesPerSecond = NSScreen.main?.maximumFramesPerSecond ?? view.preferredFramesPerSecond
+			//view.preferredFramesPerSecond = NSScreen.main?.maximumFramesPerSecond ?? view.preferredFramesPerSecond
 		}
 		#else
 		view.preferredFramesPerSecond = UIScreen.main.maximumFramesPerSecond
@@ -100,7 +103,7 @@ public struct Model3DView: ViewRepresentable {
 		#else
 		let screenScale = UIScreen.main.scale
 		#endif
-		
+
 		view.antialiasingMode = screenScale > 1 ? .none : .multisampling2X
 
 		context.coordinator.camera = context.environment.camera
@@ -156,7 +159,7 @@ extension Model3DView {
 extension Model3DView {
 	/// Holds all the state values.
 	public class SceneCoordinator: NSObject {
-		
+
 		private enum LoadError: Error {
 			case unableToLoad
 		}
@@ -224,7 +227,7 @@ extension Model3DView {
 			// Load the scene file/reference.
 			// If an url is given, the scene will be loaded asynchronously via `AsyncResourcesCache`, making sure
 			// only one instance lives in memory and doesn't block the main thread.
-			// TODO: Add error handling...
+			// TODO: Add (better?) error handling...
 			if case .url(let sceneUrl) = sceneFile,
 			   let url = sceneUrl
 			{
@@ -314,7 +317,7 @@ extension Model3DView {
 			
 			if let asset = asset {
 				scene.background.contents = Self.imageCache.resource(for: asset) { url in
-					PlatformImage(contentsOf: url)
+					PlatformImage(contentsOfFile: url.path)
 				}
 			}
 			else {
@@ -331,7 +334,9 @@ extension Model3DView {
 			}
 			
 			if let settings = settings,
-			   let image = Self.imageCache.resource(for: settings.url, action: PlatformImage.init(contentsOf:))
+			   let image = Self.imageCache.resource(for: settings.url, action: { url in
+				   PlatformImage(contentsOfFile: url.path)
+			   })
 			{
 				scene.lightingEnvironment.contents = image
 				scene.lightingEnvironment.intensity = settings.intensity
@@ -380,6 +385,12 @@ extension Model3DView {
 		view.rotation = rotate ?? view.rotation
 		view.scale = scale ?? view.scale
 		view.translate = translate ?? view.translate
+		return view
+	}
+	
+	public func rotate(angles: (x: Angle, y: Angle, z: Angle)) -> Self {
+		var view = self
+		view.euler = [Float(angles.x.radians), Float(angles.y.radians), Float(angles.z.radians)]
 		return view
 	}
 	

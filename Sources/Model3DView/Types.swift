@@ -1,6 +1,6 @@
 /*
  * Types.swift
- * Created by Freek Zijlmans on 08-08-2021.
+ * Created by Freek (github.com/frzi) on 08-08-2021.
  */
 
 import Foundation
@@ -23,6 +23,7 @@ public enum ModelLoadState {
 	case error
 }
 
+/// An internal type to help diffing the passed scene/file to `Model3DView`.
 enum SceneFileType: Equatable {
 	case reference(SCNScene)
 	case url(URL?)

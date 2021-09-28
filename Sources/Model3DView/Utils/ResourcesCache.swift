@@ -1,6 +1,6 @@
 /*
  * ResourcesCache.swift
- * Created by Freek Zijlmans on 08-08-2021.
+ * Created by Freek (github.com/frzi) on 08-08-2021.
  */
 
 import Combine

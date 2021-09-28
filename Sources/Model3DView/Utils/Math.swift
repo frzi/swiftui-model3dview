@@ -1,18 +1,19 @@
 /*
  * Math.swift
- * Created by Freek Zijlmans on 11-08-2021.
+ * Created by Freek (github.com/frzi) on 11-08-2021.
  */
 
 import Foundation
 import simd
 import SwiftUI
 
+public typealias Matrix3x3 = float3x3
+public typealias Matrix4x4 = float4x4
+public typealias Quaternion = simd_quatf
 public typealias Vector2 = SIMD2<Float>
 public typealias Vector3 = SIMD3<Float>
 public typealias Vector4 = SIMD4<Float>
-public typealias Quaternion = simd_quatf
-public typealias Matrix3x3 = float3x3
-public typealias Matrix4x4 = float4x4
+
 
 // MARK: - Functions
 @inlinable func clamp<T: Comparable>(_ val: T, _ minimum: T, _ maximum: T) -> T {
@@ -141,6 +142,18 @@ extension Vector4: ExpressibleByFloatLiteral, ExpressibleByIntegerLiteral {
 }
 
 // MARK: - Additive / vector arithemtic
+extension SIMD2: AdditiveArithmetic where Scalar: FloatingPoint {}
+
+extension Vector2: VectorArithmetic {
+	public mutating func scale(by rhs: Double) {
+		self *= Float(rhs)
+	}
+	
+	public var magnitudeSquared: Double {
+		Double(length_squared(self))
+	}
+}
+
 extension SIMD3: AdditiveArithmetic where Scalar: FloatingPoint {}
 
 extension Vector3: VectorArithmetic {
@@ -149,7 +162,19 @@ extension Vector3: VectorArithmetic {
 	}
 	
 	public var magnitudeSquared: Double {
-		Double(x * x + y * y + z * z)
+		Double(length_squared(self))
+	}
+}
+
+extension SIMD4: AdditiveArithmetic where Scalar: FloatingPoint {}
+
+extension Vector4: VectorArithmetic {
+	public mutating func scale(by rhs: Double) {
+		self *= Float(rhs)
+	}
+	
+	public var magnitudeSquared: Double {
+		Double(length_squared(self))
 	}
 }
 
@@ -159,10 +184,10 @@ extension Quaternion: VectorArithmetic {
 	}
 	
 	public var magnitudeSquared: Double {
-		Double(imag.x * imag.x + imag.y * imag.y + imag.z * imag.z)
+		Double(imag.x * imag.x + imag.y * imag.y + imag.z * imag.z + real * real)
 	}
 	
-	public static var zero: simd_quatf {
-		[0, 0, 0, 1]
+	public static var zero: Quaternion {
+		[0, 0, 0, 0]
 	}
 }

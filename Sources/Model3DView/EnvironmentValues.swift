@@ -1,6 +1,6 @@
 /*
  * EnvironmentValues.swift
- * Created by Freek Zijlmans on 08-08-2021.
+ * Created by Freek (github.com/frzi) on 08-08-2021.
  */
 
 import SwiftUI
@@ -12,10 +12,6 @@ struct CameraEnvironmentKey: EnvironmentKey {
 
 struct IBLEnvironmentKey: EnvironmentKey {
 	static var defaultValue: IBLValues?
-}
-
-struct ModelAnimationKey: EnvironmentKey {
-	static var defaultValue: String?
 }
 
 struct SkyboxEnvironmentKey: EnvironmentKey {
@@ -32,11 +28,6 @@ extension EnvironmentValues {
 	var ibl: IBLValues? {
 		get { self[IBLEnvironmentKey.self] }
 		set { self[IBLEnvironmentKey.self] = newValue }
-	}
-	
-	var modelAnimation: String? {
-		get { self[ModelAnimationKey.self] }
-		set { self[ModelAnimationKey.self] = newValue }
 	}
 	
 	var skybox: URL? {

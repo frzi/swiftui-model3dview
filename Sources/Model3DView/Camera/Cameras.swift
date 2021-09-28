@@ -1,6 +1,6 @@
 /*
  * Cameras.swift
- * Created by Freek Zijlmans on 08-08-2021.
+ * Created by Freek (github.com/frzi) on 08-08-2021.
  */
 
 import SwiftUI
@@ -16,7 +16,7 @@ public protocol Camera {
 
 extension Camera {
 	/// Adjust the camera to orient towards `center`.
-	mutating func lookAt(center: Vector3, up: Vector3 = [0, 1, 0]) {
+	public mutating func lookAt(center: Vector3, up: Vector3 = [0, 1, 0]) {
 		let m = Matrix4x4.lookAt(eye: position, target: center, up: up)
 		let mat3 = Matrix3x3(
 			[m.columns.0.x, m.columns.0.y, m.columns.0.z],
@@ -35,14 +35,30 @@ extension Camera {
 }
 
 // MARK: - Camera view modifier
-extension View {
-	/// Sets the default camera.
-	public func camera<C: Camera>(_ camera: C) -> some View {
-		environment(\.camera, camera)
-		//modifier(CameraModifier(camera: camera))
+private struct CameraModifier<C: Camera>: AnimatableModifier {
+	var camera: C
+
+	var animatableData: AnimatablePair<Vector3, Quaternion> {
+		get {
+			.init(camera.position, camera.rotation)
+		}
+		set {
+			camera.position = newValue.first
+			camera.rotation = newValue.second
+		}
+	}
+
+	func body(content: Content) -> some View {
+		content.environment(\.camera, camera)
 	}
 }
 
+extension View {
+	/// Sets the default camera.
+	public func camera<C: Camera>(_ camera: C) -> some View {
+		modifier(CameraModifier(camera: camera))
+	}
+}
 
 // MARK: - Camera types
 /// Camera with orthographic projection.
