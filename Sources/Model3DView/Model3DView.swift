@@ -387,7 +387,7 @@ extension Model3DView {
 		view.translate = translate ?? view.translate
 		return view
 	}
-	
+
 	public func rotate(angles: (x: Angle, y: Angle, z: Angle)) -> Self {
 		var view = self
 		view.euler = [Float(angles.x.radians), Float(angles.y.radians), Float(angles.z.radians)]
@@ -397,6 +397,12 @@ extension Model3DView {
 	/// Show SceneKit statistics and inspector in the view.
 	///
 	/// Only use this modifier during development (i.e. using `#if DEBUG`).
+	/// ```swift
+	/// Model3DView(named: "robot.gltf")
+	/// 	#if DEBUG
+	/// 	.showStatistics()
+	/// 	#endif
+	/// ```
 	public func showStatistics() -> Self {
 		var view = self
 		view.showsStatistics = true
