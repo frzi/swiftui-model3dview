@@ -31,29 +31,26 @@ public struct Model3DView: ViewRepresentable {
 	private let sceneFile: SceneFileType
 
 	// Settable properties via view modifiers.
-	// TODO: Considering these are private perhaps replace this with a single transform matrix.
-	private var euler: Vector3 = [0, 0, 0]
-	private var rotation: Quaternion = [0, 0, 0, 1]
+	// private var rotation: Quaternion = [0, 0, 0, 1]
+	private var rotation: Euler = Euler()
 	private var scale: Vector3 = [1, 1, 1]
 	private var translate: Vector3 = [0, 0, 0]
 
 	private var onLoadHandlers: [(ModelLoadState) -> Void] = []
 	private var showsStatistics = false
 
-	// MARK: -
+	// MARK: - Initializers
 	/// Load a 3D asset from the app's bundle.
 	public init(named: String) {
 		sceneFile = .url(Bundle.main.url(forResource: named, withExtension: nil))
 	}
 	
 	/// Load a 3D asset from a file URL.
-	public init(file: URL, euler: Vector3 = 0, translate: Vector3 = 0) {
+	public init(file: URL) {
 		#if DEBUG
 		precondition(file.isFileURL, "Given URL is not a file URL.")
 		#endif
 		sceneFile = .url(file)
-		self.euler = euler
-		self.translate = translate
 	}
 	
 	/// Load 3D assets from a SceneKit scene instance.
@@ -153,6 +150,19 @@ extension Model3DView {
 		updateView(view, context: context)
 	}
 	#endif
+}
+
+// MARK: - Animatable
+extension Model3DView: Animatable {
+	public var animatableData: AnimatablePair<Vector3, Euler> {
+		get {
+			.init(translate, rotation)
+		}
+		set {
+			translate = newValue.first
+			rotation = newValue.second
+		}
+	}
 }
 
 // MARK: - Coordinator
@@ -305,8 +315,9 @@ extension Model3DView {
 
 		// MARK: - Apply new values.
 		/// Apply scene transforms.
-		fileprivate func setTransform(rotation: Quaternion, scale: Vector3, translate: Vector3) {
-			transform = Matrix4x4(scale: scale) * Matrix4x4(translation: translate) * Matrix4x4(rotation)
+		fileprivate func setTransform(rotation: Euler, scale: Vector3, translate: Vector3) {
+			let quat = Quaternion(rotation)
+			transform = Matrix4x4(scale: scale) * Matrix4x4(translation: translate) * Matrix4x4(quat)
 		}
 
 		/// Set the skybox texture from file.
@@ -380,17 +391,11 @@ extension Model3DView {
 	
 	/// Transform the model in 3D space. Use this to either rotate, scale or move the 3D model from the center.
 	/// Applying this modifier multiple times will result in overriding previously set values.
-	public func transform(rotate: Quaternion? = nil, scale: Vector3? = nil, translate: Vector3? = nil) -> Self {
+	public func transform(rotate: Euler? = nil, scale: Vector3? = nil, translate: Vector3? = nil) -> Self {
 		var view = self
 		view.rotation = rotate ?? view.rotation
 		view.scale = scale ?? view.scale
 		view.translate = translate ?? view.translate
-		return view
-	}
-
-	public func rotate(angles: (x: Angle, y: Angle, z: Angle)) -> Self {
-		var view = self
-		view.euler = [Float(angles.x.radians), Float(angles.y.radians), Float(angles.z.radians)]
 		return view
 	}
 	

@@ -9,6 +9,7 @@ import SwiftUI
 /// Rotation vector where all elements are of type `Angle`.
 ///
 /// The vector represents Euler angles.
+/// - Important: Any arithemtic calculations are based on radians.
 public struct Euler: Equatable {
 	public var x: Angle
 	public var y: Angle
@@ -19,12 +20,11 @@ public struct Euler: Equatable {
 		self.y = y
 		self.z = z
 	}
-}	
+}
 
-extension Euler: ExpressibleByArrayLiteral {
-	public init(arrayLiteral elements: Angle...) {
-		precondition(elements.count == 3)
-		self.init(x: elements[0], y: elements[1], z: elements[2])
+extension Euler: CustomStringConvertible {
+	public var description: String {
+		"Euler(\(x), \(y), \(z))"
 	}
 }
 

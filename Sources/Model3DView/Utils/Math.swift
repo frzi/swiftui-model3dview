@@ -21,6 +21,29 @@ public typealias Vector4 = SIMD4<Float>
 }
 
 // MARK: - Quaternion utilities
+extension Quaternion {
+	// https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Source_code
+	/// Quaternion from Euler angles.
+	///
+	/// The quaternion is composed from Euler angles in ZYX order.
+	public init(_ euler: Euler) {
+		let cy = cos(euler.z.radians * 0.5)
+		let sy = sin(euler.z.radians * 0.5)
+		let cp = cos(euler.y.radians * 0.5)
+		let sp = sin(euler.y.radians * 0.5)
+		let cr = cos(euler.x.radians * 0.5)
+		let sr = sin(euler.x.radians * 0.5)
+		
+		// ZYX order.
+		let x = sr * cp * cy - cr * sp * sy
+		let y = cr * sp * cy + sr * cp * sy
+		let z = cr * cp * sy - sr * sp * cy
+		let r = cr * cp * cy + sr * sp * sy
+		
+		self.init(ix: Float(x), iy: Float(y), iz: Float(z), r: Float(r))
+	}
+}
+
 extension Quaternion: ExpressibleByArrayLiteral {
 	public init(arrayLiteral elements: Float...) {
 		precondition(elements.count == 4)
