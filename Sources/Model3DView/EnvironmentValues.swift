@@ -5,6 +5,8 @@
 
 import SwiftUI
 
+// TODO: Move me?
+/// Container for 3D transform properties. Grouping them all together for the Environment values.
 struct Transform3DProperties {
 	var rotation = Euler()
 	var scale: Vector3 = [1, 1, 1]

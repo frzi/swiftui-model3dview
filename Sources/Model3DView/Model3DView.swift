@@ -32,9 +32,9 @@ public struct Model3DView: ViewRepresentable {
 
 	// Settable properties via view modifiers.
 	// private var rotation: Quaternion = [0, 0, 0, 1]
-	private var rotation: Euler = Euler()
-	private var scale: Vector3 = [1, 1, 1]
-	private var translate: Vector3 = [0, 0, 0]
+	// private var rotation: Euler = Euler()
+	// private var scale: Vector3 = [1, 1, 1]
+	// private var translate: Vector3 = [0, 0, 0]
 
 	private var onLoadHandlers: [(ModelLoadState) -> Void] = []
 	private var showsStatistics = false
@@ -124,7 +124,8 @@ public struct Model3DView: ViewRepresentable {
 		// Methods.
 		coordinator.setIBL(settings: context.environment.ibl)
 		coordinator.setSkybox(asset: context.environment.skybox)
-		coordinator.setTransform(rotation: rotation, scale: scale, translate: translate)
+		coordinator.setTransform(properties: context.environment.transform3D)
+//		coordinator.setTransform(rotation: rotation, scale: scale, translate: translate)
 	}
 }
 
@@ -303,9 +304,13 @@ extension Model3DView {
 
 		// MARK: - Apply new values.
 		/// Apply scene transforms.
-		fileprivate func setTransform(rotation: Euler, scale: Vector3, translate: Vector3) {
-			let quat = Quaternion(rotation)
-			transform = Matrix4x4(scale: scale) * Matrix4x4(translation: translate) * Matrix4x4(quat)
+//		fileprivate func setTransform(rotation: Euler, scale: Vector3, translate: Vector3) {
+//			let quat = Quaternion(rotation)
+//			transform = Matrix4x4(scale: scale) * Matrix4x4(translation: translate) * Matrix4x4(quat)
+//		}
+		fileprivate func setTransform(properties props: Transform3DProperties) {
+			let quat = Quaternion(props.rotation)
+			transform = Matrix4x4(scale: props.scale) * Matrix4x4(translation: props.translation) * Matrix4x4(quat)
 		}
 
 		/// Set the skybox texture from file.
@@ -368,6 +373,25 @@ extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	}
 }
 
+// MARK: - Animatable transform 3D
+private struct Transform3DModifier: AnimatableModifier {
+	var properties: Transform3DProperties
+	
+	var animatableData: AnimatablePair<Euler, Vector3> {
+		get {
+			.init(properties.rotation, properties.scale)
+		}
+		set {
+			properties.rotation = newValue.first
+			properties.scale = newValue.second
+		}
+	}
+	
+	func body(content: Content) -> some View {
+		content.environment(\.transform3D, properties)
+	}
+}
+
 // MARK: - Modifiers for Model3DView.
 extension Model3DView {
 	/// Adds an action to perform when the model is loaded.
@@ -379,13 +403,18 @@ extension Model3DView {
 	
 	/// Transform the model in 3D space. Use this to either rotate, scale or move the 3D model from the center.
 	/// Applying this modifier multiple times will result in overriding previously set values.
-	public func transform(rotate: Euler? = nil, scale: Vector3? = nil, translate: Vector3? = nil) -> Self {
-		var view = self
-		view.rotation = rotate ?? view.rotation
-		view.scale = scale ?? view.scale
-		view.translate = translate ?? view.translate
-		return view
+	public func transform(rotate: Euler? = nil, scale: Vector3? = nil, translate: Vector3? = nil) -> some View {
+		let props = Transform3DProperties(rotation: rotate ?? Euler(), scale: scale ?? 1, translation: translate ?? 0)
+		return modifier(Transform3DModifier(properties: props))
 	}
+
+//	public func transform(rotate: Euler? = nil, scale: Vector3? = nil, translate: Vector3? = nil) -> Self {
+//		var view = self
+//		view.rotation = rotate ?? view.rotation
+//		view.scale = scale ?? view.scale
+//		view.translate = translate ?? view.translate
+//		return view
+//	}
 	
 	/// Show SceneKit statistics and inspector in the view.
 	///
