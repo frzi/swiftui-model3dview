@@ -5,20 +5,6 @@
 
 import SwiftUI
 
-// TODO: Move me?
-/// Container for 3D transform properties. Grouping them all together for the Environment values.
-struct Transform3DProperties {
-	var rotation = Euler()
-	var scale: Vector3 = [1, 1, 1]
-	var translation: Vector3 = [0, 0, 0]
-}
-
-extension Transform3DProperties: Equatable {
-	static func == (lhs: Transform3DProperties, rhs: Transform3DProperties) -> Bool {
-		lhs.rotation == rhs.rotation && lhs.scale == rhs.scale && lhs.translation == rhs.translation
-	}
-}
-
 // MARK: - Environment keys.
 struct CameraEnvironmentKey: EnvironmentKey {
 	static var defaultValue: Camera = PerspectiveCamera()
