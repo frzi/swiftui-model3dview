@@ -124,6 +124,12 @@ public struct Model3DView: ViewRepresentable {
 	}
 }
 
+extension Model3DView: Equatable {
+	public static func == (lhs: Model3DView, rhs: Model3DView) -> Bool {
+		lhs.sceneFile == rhs.sceneFile
+	}
+}
+
 // MARK: - ViewRepresentable implementations
 extension Model3DView {
 	public func makeCoordinator() -> SceneCoordinator {
@@ -347,7 +353,7 @@ extension Model3DView {
 
 // MARK: - SCNSceneRendererDelegate
 /**
- * Note: Methods can - and most likely will be - called on a different thread.
+ * Note: Methods can - and most likely will - be called on a different thread.
  */
 extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {

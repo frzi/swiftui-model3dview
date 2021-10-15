@@ -35,6 +35,7 @@ extension Camera {
 }
 
 // MARK: - Camera view modifier
+/// An animatable modifier that helps animate properties of a `Camera`.
 private struct CameraModifier<C: Camera>: AnimatableModifier {
 	var camera: C
 

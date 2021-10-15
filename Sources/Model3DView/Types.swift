@@ -28,7 +28,7 @@ enum SceneFileType: Equatable {
 	case reference(SCNScene)
 	case url(URL?)
 	
-	static func == (lhs: Self, rhs: Self) -> Bool {
+	static func == (lhs: SceneFileType, rhs: SceneFileType) -> Bool {
 		if case .url(let l) = lhs, case .url(let r) = rhs {
 			return l == r
 		}
