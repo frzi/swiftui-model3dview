@@ -7,12 +7,16 @@ import DisplayLink
 import SwiftUI
 import simd
 
-public protocol CameraControls {}
+/// Protocol for interactive camera controls.
+public protocol CameraControls: ViewModifier {
+	associatedtype BoundCamera: Camera
+	var camera: Binding<BoundCamera> { get set }
+}
 
 /// Camera with orbit controls (also known as "arcball").
 ///
 /// The camera can be moved horizontally, vertically and zoomed in and out. The camera will always focus on the center
-/// of the model.
+/// of the scene.
 /// ```swift
 /// @State var camera = PerspectiveCamera()
 /// // etc ...
@@ -22,9 +26,10 @@ public protocol CameraControls {}
 ///
 /// ## Zooming
 /// Zooming is done by moving the camera on its local Z axis, opposed to increasing and decreasing the FOV.
-public struct OrbitControls<C: Camera>: CameraControls, ViewModifier {
+public struct OrbitControls<C: Camera>: CameraControls {
+	public typealias BoundCamera = C
 
-	public var camera: Binding<C>
+	public var camera: Binding<BoundCamera>
 	public private(set) var sensitivity: CGFloat
 	public var minPitch: Angle
 	public var maxPitch: Angle
@@ -50,7 +55,7 @@ public struct OrbitControls<C: Camera>: CameraControls, ViewModifier {
 
 	// MARK: -
 	public init(
-		camera: Binding<C>,
+		camera: Binding<BoundCamera>,
 		sensitivity: CGFloat = 0.5,
 		minPitch: Angle = .degrees(-89.9),
 		maxPitch: Angle = .degrees(89.9),
@@ -147,6 +152,8 @@ public struct OrbitControls<C: Camera>: CameraControls, ViewModifier {
 // MARK: - View+CameraControls
 extension View {
 	/// Apply interactive camera controls to the underlying `Model3DView`s.
+	///
+	/// This view modifier replaces the `.camera` modifier.
 	public func cameraControls<T: CameraControls>(_ controls: T) -> ModifiedContent<Self, T> {
 		modifier(controls)
 	}

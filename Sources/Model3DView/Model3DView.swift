@@ -273,7 +273,7 @@ extension Model3DView {
 		private func prepareScene() {
 			contentNode.childNodes.forEach { $0.removeFromParentNode() }
 
-			// Copy the root node(s) of the scene, copy their geometry, and place them in the coordinator's scene.
+			// Copy the root node(s) of the scene, copy their geometry and place them in the coordinator's scene.
 			guard let loadedScene = loadedScene else {
 				return
 			}
@@ -370,6 +370,10 @@ extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 }
 
 // MARK: - Modifiers for Model3DView
+/**
+ * These view modifiers are exclusive to `Model3DView`, modifying their values directly and returning a new copy
+ * of said `Model3DView`.
+ */
 extension Model3DView {
 	/// Adds an action to perform when the model is loaded.
 	public func onLoad(perform: @escaping (ModelLoadState) -> Void) -> Self {

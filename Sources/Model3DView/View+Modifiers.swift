@@ -5,6 +5,9 @@
 
 import SwiftUI
 
+/**
+ * Convenience view modifiers setting environment values. Applicable to all `View`s.
+ */
 extension View {
 	// MARK: - Scene IBL
 	/// Sets the default Image Based Lighting (IBL) image from a file URL.

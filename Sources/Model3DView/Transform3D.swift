@@ -42,7 +42,9 @@ private struct Transform3DModifier: AnimatableModifier {
 
 // MARK: - View modifier
 extension Model3DView {
-	/// Transform the model in 3D space. Use this to either rotate, scale or move the 3D model from the center.
+	/// Transform the model in 3D space.
+	///
+	/// Use this to rotate, scale and/or move the 3D model from the center.
 	/// Applying this modifier multiple times will result in overriding/resetting previously set values.
 	public func transform(rotate: Euler = Euler(), scale: Vector3 = 1, translate: Vector3 = 0) -> some View {
 		let props = Transform3DProperties(rotation: rotate, scale: scale, translation: translate)
