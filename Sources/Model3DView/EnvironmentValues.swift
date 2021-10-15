@@ -5,6 +5,18 @@
 
 import SwiftUI
 
+struct Transform3DProperties {
+	var rotation = Euler()
+	var scale: Vector3 = [1, 1, 1]
+	var translation: Vector3 = [0, 0, 0]
+}
+
+extension Transform3DProperties: Equatable {
+	static func == (lhs: Transform3DProperties, rhs: Transform3DProperties) -> Bool {
+		lhs.rotation == rhs.rotation && lhs.scale == rhs.scale && lhs.translation == rhs.translation
+	}
+}
+
 // MARK: - Environment keys.
 struct CameraEnvironmentKey: EnvironmentKey {
 	static var defaultValue: Camera = PerspectiveCamera()
@@ -16,6 +28,10 @@ struct IBLEnvironmentKey: EnvironmentKey {
 
 struct SkyboxEnvironmentKey: EnvironmentKey {
 	static var defaultValue: URL?
+}
+
+struct Transform3DEnvironmentKey: EnvironmentKey {
+	static var defaultValue = Transform3DProperties()
 }
 
 // MARK: - Environment values.
@@ -33,5 +49,10 @@ extension EnvironmentValues {
 	var skybox: URL? {
 		get { self[SkyboxEnvironmentKey.self] }
 		set { self[SkyboxEnvironmentKey.self] = newValue }
+	}
+	
+	var transform3D: Transform3DProperties {
+		get { self[Transform3DEnvironmentKey.self] }
+		set { self[Transform3DEnvironmentKey.self] = newValue }
 	}
 }

@@ -39,6 +39,7 @@ public struct Model3DView: ViewRepresentable {
 	private var onLoadHandlers: [(ModelLoadState) -> Void] = []
 	private var showsStatistics = false
 
+	
 	// MARK: - Initializers
 	/// Load a 3D asset from the app's bundle.
 	public init(named: String) {
@@ -150,19 +151,6 @@ extension Model3DView {
 		updateView(view, context: context)
 	}
 	#endif
-}
-
-// MARK: - Animatable
-extension Model3DView: Animatable {
-	public var animatableData: AnimatablePair<Vector3, Euler> {
-		get {
-			.init(translate, rotation)
-		}
-		set {
-			translate = newValue.first
-			rotation = newValue.second
-		}
-	}
 }
 
 // MARK: - Coordinator
