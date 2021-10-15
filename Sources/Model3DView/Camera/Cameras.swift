@@ -10,7 +10,7 @@ import simd
 /// Protocol for `Model3DView` cameras.
 public protocol Camera {
 	var position: Vector3 { get set }
-	var rotation: Quaternion { get set }
+	var rotation: Euler { get set }
 	func projectionMatrix(viewport: CGSize) -> Matrix4x4
 }
 
@@ -23,7 +23,7 @@ extension Camera {
 			[m.columns.1.x, m.columns.1.y, m.columns.1.z],
 			[m.columns.2.x, m.columns.2.y, m.columns.2.z]
 		)
-		rotation = Quaternion(mat3)
+		rotation = Euler(Quaternion(mat3))
 	}
 	
 	/// Return a copy of the camera oriented towards `center`.
@@ -39,7 +39,7 @@ extension Camera {
 private struct CameraModifier<C: Camera>: AnimatableModifier {
 	var camera: C
 
-	var animatableData: AnimatablePair<Vector3, Quaternion> {
+	var animatableData: AnimatablePair<Vector3, Euler> {
 		get {
 			.init(camera.position, camera.rotation)
 		}
@@ -65,14 +65,14 @@ extension View {
 /// Camera with orthographic projection.
 public struct OrthographicCamera: Camera, Equatable {
 	public var position: Vector3
-	public var rotation: Quaternion
+	public var rotation: Euler
 	public var near: Float
 	public var far: Float
 	public var scale: Float
 	
 	public init(
 		position: Vector3 = [0, 0, 2],
-		rotation: Quaternion = [0, 0, 0, 1],
+		rotation: Euler = Euler(),
 		near: Float = 0.1,
 		far: Float = 100,
 		scale: Float = 1
@@ -93,14 +93,14 @@ public struct OrthographicCamera: Camera, Equatable {
 /// Camera with perspective projection.
 public struct PerspectiveCamera: Camera, Equatable {
 	public var position: Vector3
-	public var rotation: Quaternion
+	public var rotation: Euler
 	public var fov: Angle
 	public var near: Float
 	public var far: Float
 	
 	public init(
 		position: Vector3 = [0, 0, 2],
-		rotation: Quaternion = [0, 0, 0, 1],
+		rotation: Euler = Euler(),
 		fov: Angle = .degrees(60),
 		near: Float = 0.1,
 		far: Float = 100

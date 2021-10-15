@@ -364,7 +364,7 @@ extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 		let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
 		cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
 
-		let cameraTransform = Matrix4x4(translation: camera.position) * Matrix4x4(camera.rotation)
+		let cameraTransform = Matrix4x4(translation: camera.position) * Matrix4x4(Quaternion(camera.rotation))
 		cameraNode.simdTransform = cameraTransform
 	}
 }
