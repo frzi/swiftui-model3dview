@@ -1,6 +1,6 @@
 # Model3DView
 
-> Render 3D models in your SwiftUI with no effort.
+> Effortlessly render 3D models in your SwiftUI app
 
 ![SwiftUI](https://img.shields.io/github/v/release/frzi/Model3DView?style=for-the-badge)
 [![SwiftUI](https://img.shields.io/badge/SwiftUI-blue.svg?style=for-the-badge&logo=swift&logoColor=black)](https://developer.apple.com/xcode/swiftui)
@@ -10,10 +10,13 @@
 
 With *Model3DView* you can effortlessly display 3D models in your SwiftUI just like you would with images. Additionally you can manipulate the camera and transform the model, all while keeping things SwiftUI-friendly.
 
+⚠️ ***IMPORTANT***: *Model3DView* is still in very early stages of development. The API is not final and ~~may~~ will change over the course of upcoming version releases.
+
 ## Index
 * [Installation](#installation-)
-* [Quickstart](#quickstart-)
+* [Examples](https://github.com/frzi/Model3DView-Examples) ↗️
 * [Features](#features-)
+* [Quickstart](#quickstart-)
 * [FAQ](#faq-)
 
 <br>
@@ -29,7 +32,11 @@ Once added, import the package in your code:
 import Model3DView
 ```
 
-<br><hr><br>
+<br>
+
+## Features ✨
+
+<br>
 
 ## Quickstart 🚀
 The code is provided with ample documentation. For detailed information about views, methods, etc, please see inquire Xcode's documentation features. Below a quick rundown of *Model3DView*'s features.
@@ -42,6 +49,7 @@ struct MyView: View {
 	}
 }
 ```
+This renders a 3D model with the filename "*duck.gltf*" that's located in the app's bundle.
 
 ### `Model3DView`
 
@@ -54,22 +62,18 @@ struct MyView: View {
 
 ### Skyboxes and IBL (image based lighting)
 
-<br><hr><br>
-
-## Features ✨
-
-<br><hr><br>
+<br>
 
 ## FAQ ℹ️
-**Can I use this to make 3D games?**  
+### Can I use this to make 3D games?
 ***No***. It is very important to understand *Model3DView* is made to only render 3D models in your SwiftUI app, with very limited interaction. It acts as an ImageView, but for 3D models.
 
-**Why use *Model3DView* instead of *SceneView*?**  
+### Why use *Model3DView* instead of *SceneView*?**  
 *SceneView* (included with SwiftUI) is very limited in its nature. It simply wraps a `SKSceneView` for SwiftUI. But due to it being closed source gives no control on this view. For instance: giving the view a transparent background is practically impossible. 
 
 *Model3DView* also provides a workflow more inline with SwiftUI's; using view modifiers to manipulate the model and camera.
 
-<br><hr><br>
+<br>
 
 ## License 📄
 [MIT License](LICENSE).
