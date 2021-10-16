@@ -124,6 +124,7 @@ public struct Model3DView: ViewRepresentable {
 	}
 }
 
+// MARK: - Equatable
 extension Model3DView: Equatable {
 	public static func == (lhs: Model3DView, rhs: Model3DView) -> Bool {
 		lhs.sceneFile == rhs.sceneFile
@@ -169,17 +170,17 @@ extension Model3DView {
 		private static let sceneCache = AsyncResourcesCache<URL, SCNScene>()
 
 		// MARK: -
+		private weak var view: SCNView!
+
 		private let cameraNode = SCNNode()
 		private let contentNode = SCNNode()
 		private let scene = SCNScene()
-
-		private weak var view: SCNView!
 
 		private var loadSceneCancellable: AnyCancellable?
 		private var loadedScene: SCNScene? // Keep a reference for `AsyncResourcesCache`.
 
 		fileprivate var onLoadHandlers: [(ModelLoadState) -> Void] = []
-		
+
 		// Properties for diffing.
 		private var sceneFile: SceneFileType?
 		private var ibl: IBLValues?
@@ -334,9 +335,9 @@ extension Model3DView {
 			}
 			
 			if let settings = settings,
-			   let image = Self.imageCache.resource(for: settings.url, action: { url in
-				   PlatformImage(contentsOfFile: url.path)
-			   })
+				let image = Self.imageCache.resource(for: settings.url, action: { url in
+					PlatformImage(contentsOfFile: url.path)
+				})
 			{
 				scene.lightingEnvironment.contents = image
 				scene.lightingEnvironment.intensity = settings.intensity
