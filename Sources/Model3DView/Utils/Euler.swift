@@ -22,7 +22,7 @@ public struct Euler: Equatable {
 	}
 	
 	// https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles#Source_code_2
-	/// Initialize with a rotation quaterion.
+	/// Initialize with a rotation quaternion.
 	public init(_ quat: Quaternion) {
 		let sinr_cosp = 2 * (quat.real * quat.imag.x + quat.imag.y * quat.imag.z)
 		let cosr_cosp = 1 - 2 * (quat.imag.x * quat.imag.x + quat.imag.y * quat.imag.y)

@@ -49,7 +49,7 @@ public struct Model3DView: ViewRepresentable {
 	
 	/// Load 3D assets from a SceneKit scene instance.
 	///
-	/// When passing a SceneKit scene instance to `Model3DView` all the contents will be copied to an internal scene.
+	/// When passing a SceneKit scene instance to `Model3DView` all its contents will be copied to an internal scene.
 	/// Although geometry data will be shared (an optimization provided by SceneKit), any changes to nodes in the
 	/// original scene will not apply to the scene rendered by `Model3DView`.
 	///
@@ -245,6 +245,7 @@ extension Model3DView {
 						}
 					}
 					catch {
+						print(error)
 						promise(.failure(LoadError.unableToLoad))
 					}
 				}
