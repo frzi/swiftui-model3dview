@@ -76,16 +76,16 @@ public struct Model3DView: ViewRepresentable {
 		let view = SCNView()
 		view.autoenablesDefaultLighting = true
 		view.backgroundColor = .clear
-		
+
 		// Framerate
 		#if os(macOS)
 		if #available(macOS 12, *) {
-			//view.preferredFramesPerSecond = NSScreen.main?.maximumFramesPerSecond ?? view.preferredFramesPerSecond
+			view.preferredFramesPerSecond = NSScreen.main?.maximumFramesPerSecond ?? view.preferredFramesPerSecond
 		}
 		#else
 		view.preferredFramesPerSecond = UIScreen.main.maximumFramesPerSecond
 		#endif
-		
+
 		// Anti-aliasing.
 		// If the screen's pixel ratio is above 1 we disable anti-aliasing. Otherwise use MSAAx2.
 		// This may become a view modifier at some point instead.
