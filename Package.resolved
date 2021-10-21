@@ -1,0 +1,25 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "DisplayLink",
+        "repositoryURL": "https://github.com/timdonnelly/DisplayLink",
+        "state": {
+          "branch": null,
+          "revision": "e95f592a176246172324f10eb1bdc92f121d479f",
+          "version": "0.2.0"
+        }
+      },
+      {
+        "package": "GLTFSceneKit",
+        "repositoryURL": "https://github.com/magicien/GLTFSceneKit",
+        "state": {
+          "branch": null,
+          "revision": "8bd50d2887c4e0ccc50b9e576768c1800ae15c50",
+          "version": "0.3.0"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -9,7 +9,7 @@ import SwiftUI
 /// Rotation vector where all elements are of type `Angle`.
 ///
 /// The vector represents Euler angles.
-/// - Important: Any arithemtic calculations are based on radians.
+/// - Note: Any arithmetic calculations are based on radians.
 public struct Euler: Equatable {
 	public var x: Angle
 	public var y: Angle
