@@ -11,7 +11,7 @@ import SwiftUI
 #if os(macOS)
 typealias PlatformImage = NSImage
 typealias ViewRepresentable = NSViewRepresentable
-#else
+#elseif os(iOS) || os(tvOS)
 typealias PlatformImage = UIImage
 typealias ViewRepresentable = UIViewRepresentable
 #endif
@@ -20,7 +20,7 @@ typealias IBLValues = (url: URL, intensity: Double)
 
 public enum ModelLoadState {
 	case success
-	case error
+	case failure
 }
 
 /// An internal type to help diffing the passed scene/file to `Model3DView`.

@@ -6,6 +6,12 @@ Effortlessly display 3D models in your SwiftUI app.
 
 With *Model3DView* you can effortlessly display 3D models in your SwiftUI just like you would with images. Additionally you can manipulate the camera and transform the model, all while keeping things SwiftUI-friendly.
 
+### Supported file types
+The following 3D file formats are supported:
+* `.gltf`, `.glb`: GL Transmission Format (both text and binary are supported)
+* `.obj`: Waveform 3D Object format
+* `.scn`: SceneKit scene file
+
 ## Topics
 
 ### Guides

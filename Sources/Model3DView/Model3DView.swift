@@ -19,13 +19,7 @@ import SwiftUI
 /// 	.camera(PerspectiveCamera())
 /// ```
 ///
-/// ## Supported file types
-/// The following 3D file formats are supported:
-/// * `.gltf`, `.glb`: GL Transmission Format (both text and binary are supported)
-/// * `.obj`: Waveform 3D Object format
-/// * `.scn`: SceneKit scene file
-///
-/// - Important: Keep the number of `Model3DView`s simultaneously on screen to a minimum.
+/// - Note: It is advised to keep the number of `Model3DView`s simultaneously on screen to a minimum.
 public struct Model3DView: ViewRepresentable {
 
 	private let sceneFile: SceneFileType
@@ -67,6 +61,7 @@ public struct Model3DView: ViewRepresentable {
 	/// 	Model3DView(scene: Self.scene)
 	/// }
 	/// ```
+	/// - Warning: This feature may be removed in a future version of `Model3DView`.
 	public init(scene: SCNScene) {
 		sceneFile = .reference(scene)
 	}
@@ -91,7 +86,7 @@ public struct Model3DView: ViewRepresentable {
 		// This may become a view modifier at some point instead.
 		#if os(macOS)
 		let screenScale = NSScreen.main?.backingScaleFactor ?? 1
-		#else
+		#elseif os(iOS) || os(tvOS)
 		let screenScale = UIScreen.main.scale
 		#endif
 
@@ -145,7 +140,7 @@ extension Model3DView {
 	public func updateNSView(_ view: SCNView, context: Context) {
 		updateView(view, context: context)
 	}
-	#else
+	#elseif os(iOS) || os(tvOS)
 	public func makeUIView(context: Context) -> SCNView {
 		makeView(context: context)
 	}
@@ -191,6 +186,7 @@ extension Model3DView {
 		private var transform = Matrix4x4.identity
 
 		private var contentScale: Float = 1
+		private var contentCenter: Vector3 = 0
 		fileprivate var camera: Camera! {
 			didSet {
 				cameraNode.camera?.name = String(describing: type(of: camera))
@@ -253,7 +249,7 @@ extension Model3DView {
 					if case .failure(_) = completion {
 						DispatchQueue.main.async {
 							for onLoad in self.onLoadHandlers {
-								onLoad(.error)
+								onLoad(.failure)
 							}
 						}
 					}
@@ -295,6 +291,8 @@ extension Model3DView {
 				copiedRoot.boundingBox.max.y - copiedRoot.boundingBox.min.y,
 				copiedRoot.boundingBox.max.z - copiedRoot.boundingBox.min.z)
 			contentScale = Float(2 / maxDimension)
+
+			contentCenter = mix(Vector3(copiedRoot.boundingBox.min), Vector3(copiedRoot.boundingBox.max), t: Float(0.5))
 			
 			contentNode.addChildNode(copiedRoot)
 			
@@ -360,13 +358,13 @@ extension Model3DView {
 extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 	public func renderer(_ renderer: SCNSceneRenderer, updateAtTime time: TimeInterval) {
 		// Update the content node.
-		contentNode.simdTransform = Matrix4x4(scale: [contentScale, contentScale, contentScale]) * transform
+		contentNode.simdTransform = Matrix4x4(scale: Vector3(repeating: contentScale)) * transform
 		
 		// Update the camera.
 		let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
 		cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
-
-		let cameraTransform = Matrix4x4(translation: camera.position) * Matrix4x4(Quaternion(camera.rotation))
+		
+		let cameraTransform = Matrix4x4(translation: camera.position + contentCenter) * Matrix4x4(Quaternion(camera.rotation))
 		cameraNode.simdTransform = cameraTransform
 	}
 }
@@ -378,6 +376,9 @@ extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
  */
 extension Model3DView {
 	/// Adds an action to perform when the model is loaded.
+	///
+	/// Because assets are loaded asynchronously you can use `onLoad` handlers to react to state changes. Use this to
+	/// temporarily show a progress bar or a thumbnail, or to display alternative views if loading has failed.
 	public func onLoad(perform: @escaping (ModelLoadState) -> Void) -> Self {
 		var view = self
 		view.onLoadHandlers.append(perform)

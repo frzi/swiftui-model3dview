@@ -13,7 +13,17 @@ public protocol CameraControls: ViewModifier {
 	var camera: Binding<BoundCamera> { get set }
 }
 
-/// Camera with orbit controls (also known as "arcball").
+// MARK: - View+CameraControls
+extension View {
+	/// Apply interactive camera controls to the underlying `Model3DView`s.
+	///
+	/// This view modifier replaces the `.camera` modifier.
+	public func cameraControls<T: CameraControls>(_ controls: T) -> ModifiedContent<Self, T> {
+		modifier(controls)
+	}
+}
+
+/// Orbit controls (also known as "arcball") for a camera.
 ///
 /// The camera can be moved horizontally, vertically and zoomed in and out. The camera will always focus on the center
 /// of the scene.
@@ -146,15 +156,5 @@ public struct OrbitControls<C: Camera>: CameraControls {
 			.onAppear { tick() }
 			.camera(camera.wrappedValue)
 			.onFrame(isActive: isAnimating, tick)
-	}
-}
-
-// MARK: - View+CameraControls
-extension View {
-	/// Apply interactive camera controls to the underlying `Model3DView`s.
-	///
-	/// This view modifier replaces the `.camera` modifier.
-	public func cameraControls<T: CameraControls>(_ controls: T) -> ModifiedContent<Self, T> {
-		modifier(controls)
 	}
 }

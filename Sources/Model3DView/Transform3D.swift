@@ -46,6 +46,8 @@ extension Model3DView {
 	///
 	/// Use this to rotate, scale and/or move the 3D model from the center.
 	/// Applying this modifier multiple times will result in overriding/resetting previously set values.
+	///
+	/// These properties are animatable.
 	public func transform(rotate: Euler = Euler(), scale: Vector3 = 1, translate: Vector3 = 0) -> some View {
 		let props = Transform3DProperties(rotation: rotate, scale: scale, translation: translate)
 		return modifier(Transform3DModifier(properties: props))

@@ -14,7 +14,6 @@ public typealias Vector2 = SIMD2<Float>
 public typealias Vector3 = SIMD3<Float>
 public typealias Vector4 = SIMD4<Float>
 
-
 // MARK: - Functions
 @inlinable func clamp<T: Comparable>(_ val: T, _ minimum: T, _ maximum: T) -> T {
 	min(max(val, minimum), maximum)

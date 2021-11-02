@@ -1,4 +1,3 @@
-
 /*
  * Euler.swift
  * Created by Freek (github.com/frzi) on 14-10-2021.
