@@ -293,9 +293,10 @@ extension Model3DView {
 			contentScale = Float(2 / maxDimension)
 
 			contentCenter = mix(Vector3(copiedRoot.boundingBox.min), Vector3(copiedRoot.boundingBox.max), t: Float(0.5))
-			
+			contentCenter *= Float(1 / maxDimension)
+
 			contentNode.addChildNode(copiedRoot)
-			
+
 			DispatchQueue.main.async {
 				for onLoad in self.onLoadHandlers {
 					onLoad(.success)

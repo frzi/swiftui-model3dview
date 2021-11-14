@@ -12,7 +12,7 @@
       },
       {
         "package": "GLTFSceneKit",
-        "repositoryURL": "https://github.com/magicien/GLTFSceneKit",
+        "repositoryURL": "https://github.com/frzi/GLTFSceneKit",
         "state": {
           "branch": null,
           "revision": "8bd50d2887c4e0ccc50b9e576768c1800ae15c50",

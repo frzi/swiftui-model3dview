@@ -15,7 +15,7 @@ let package = Package(
 			targets: ["Model3DView"]),
 	],
 	dependencies: [
-		.package(url: "https://github.com/magicien/GLTFSceneKit", from: "0.3.0"),
+		.package(url: "https://github.com/frzi/GLTFSceneKit", from: "0.3.0"),
 		.package(url: "https://github.com/timdonnelly/DisplayLink", from: "0.2.0"),
 	],
 	targets: [
