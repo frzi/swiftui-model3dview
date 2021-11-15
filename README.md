@@ -20,8 +20,8 @@ With *Model3DView* you can effortlessly display 3D models in your SwiftUI just l
 
 ## Index
 * [Examples](https://github.com/frzi/Model3DView-Examples) ↗️
-* [Installation](#installation-)
 * [Features](#features-)
+* [Installation](#installation-)
 * [Quickstart](#quickstart-)
 * [FAQ](#faq-)
 * [Known issues](#known-issues-)
@@ -33,19 +33,6 @@ With *Model3DView* you can effortlessly display 3D models in your SwiftUI just l
 ## Examples
 
 <-- image and link here -->
-
-<br>
-
-## Installation 🛠
-In Xcode add the dependency to your project via *File > Add Packages > Search or Enter Package URL* and use the following url:
-```
-https://github.com/frzi/Model3DView.git
-```
-
-Once added, import the package in your code:
-```swift
-import Model3DView
-```
 
 <br>
 
@@ -62,8 +49,23 @@ import Model3DView
 
 <br>
 
+## Installation 🛠
+In Xcode add the dependency to your project via *File > Add Packages > Search or Enter Package URL* and use the following url:
+```
+https://github.com/frzi/Model3DView.git
+```
+
+Once added, import the package in your code:
+```swift
+import Model3DView
+```
+
+<br>
+
 ## Quickstart 🚀
-The code is provided with ample documentation. For detailed information about views, methods, etc, please see inquire Xcode's documentation features. Below a quick rundown of *Model3DView*'s features.
+The code is provided with ample documentation, including [DocC](Sources/Model3DView/Model3DView.docc). For detailed information about views, methods, etc, please use Xcode's documentation features.
+
+Below a quick rundown of *Model3DView*'s features.
 
 Using *Model3DView* couldn't possibly be more easy. Use the `Model3DView` like any other view:
 ```swift
@@ -90,7 +92,7 @@ This renders a 3D model with the filename "*duck.gltf*" that's located in the ap
 
 <br>
 
-## FAQ 📑
+## FAQ ℹ️
 ### Can I use this to make 3D games?
 ***No***. It is very important to understand *Model3DView* is made to only render 3D models in your SwiftUI app, with very limited interaction. It's nothing more than an 'ImageView' to easily spruce up your app with 3D graphics.
 
