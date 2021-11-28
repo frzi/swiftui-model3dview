@@ -286,10 +286,12 @@ extension Model3DView {
 				}
 
 			// Scale the scene/model to normalized (-1, 1) scale.
-			let maxDimension = max(
+			var maxDimension = max(
 				copiedRoot.boundingBox.max.x - copiedRoot.boundingBox.min.x,
 				copiedRoot.boundingBox.max.y - copiedRoot.boundingBox.min.y,
 				copiedRoot.boundingBox.max.z - copiedRoot.boundingBox.min.z)
+			maxDimension = maxDimension == 0 ? 1 : maxDimension
+			
 			contentScale = Float(2 / maxDimension)
 
 			contentCenter = mix(Vector3(copiedRoot.boundingBox.min), Vector3(copiedRoot.boundingBox.max), t: Float(0.5))
@@ -365,7 +367,9 @@ extension Model3DView.SceneCoordinator: SCNSceneRendererDelegate {
 		let projection = camera.projectionMatrix(viewport: view.currentViewport.size)
 		cameraNode.camera?.projectionTransform = SCNMatrix4(projection)
 		
-		let cameraTransform = Matrix4x4(translation: camera.position + contentCenter) * Matrix4x4(Quaternion(camera.rotation))
+		let rotation = Matrix4x4(Quaternion(camera.rotation))
+		let translation = Matrix4x4(translation: camera.position + contentCenter)
+		let cameraTransform = translation * rotation
 		cameraNode.simdTransform = cameraTransform
 	}
 }
