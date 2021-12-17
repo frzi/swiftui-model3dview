@@ -3,7 +3,6 @@
  * Created by Freek (github.com/frzi) on 11-08-2021.
  */
 
-import Foundation
 import simd
 import SwiftUI
 

@@ -151,8 +151,7 @@ public struct OrbitControls<C: Camera>: CameraControls {
 
 	public func body(content: Content) -> some View {
 		content
-			.gesture(dragGesture)
-			.gesture(pinchGesture)
+			.gesture(dragGesture.exclusively(before: pinchGesture))
 			.onAppear { tick() }
 			.camera(camera.wrappedValue)
 			.onFrame(isActive: isAnimating, tick)

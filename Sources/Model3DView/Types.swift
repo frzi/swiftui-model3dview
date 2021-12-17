@@ -3,7 +3,6 @@
  * Created by Freek (github.com/frzi) on 08-08-2021.
  */
 
-import Foundation
 import GLTFSceneKit
 import SceneKit
 import SwiftUI

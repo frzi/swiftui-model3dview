@@ -1,4 +1,4 @@
-# Model3DView
+![Model3DView](./Sources/Model3DView/Model3DView.docc/Resources/header.png)
 
 > Effortlessly render 3D models in your SwiftUI app
 
@@ -69,7 +69,7 @@ Below a quick rundown of *Model3DView*'s features.
 
 Using *Model3DView* couldn't possibly be more easy. Use the `Model3DView` like any other view:
 ```swift
-import Model3DView
+import Model3DViewD
 
 struct MyView: View {
 	var body: some View {
@@ -82,13 +82,61 @@ This renders a 3D model with the filename "*duck.gltf*" that's located in the ap
 ### `Model3DView`
 
 #### Transform
+```swift
+Model3DView(named: "house.glb")
+	.transform(
+		rotate: Euler(y: .degrees(45)),
+		scale: 1.2,
+		transform: [0, 0, -1]
+	)
+```
+Rotate, scale and/or translate the 3D asset, relative to its origin. These properties are animatable!
+
 #### `onLoad` handler
+```swift
+Model3DView(file: model.path)
+	.onLoad { state in
+		self.modelLoaded = state == .success
+	}
+```
+For performance and UX reasons, 3D assets are loaded asynchronously. Use the `.onLoad` view modifier to attach a listener when the assets have fully loaded. This gives you the opportunity to place a temporary placeholder over the `Model3DView`.
+
+<br>
 
 ### Cameras
+If the default camera is not to your liking you can just as easily set your own camera.
+```swift
+Model3DView(named: "robot.gltf")
+	.camera(PerspectiveCamera(fov: .degrees(75)))
+```
+The available camera types are `PerspectiveCamera` and `OrthographicCamera`.
+
+<br>
 
 ### Interactive cameras
+To ease the burden of doing the hard work yourself, *Model3DView* comes with interactive camera controls support. As of now the only included camera controls are `OrbitControls` (also known as "arcball").
+```swift
+@State var camera = PerspectiveCamera()
+
+Model3DView(named: "garden.obj")
+	.cameraControls(OrbitControls(
+		camera: $camera,
+		sensitivity: 0.5,
+		friction: 0.1
+	))
+```
+
+<br>
 
 ### Skyboxes and IBL (image based lighting)
+*Model3DView* does not allow you to place lights in the scenery. Instead you can set the mood by using environment maps and the skybox texture. 
+```swift
+Model3DView(file: product.path)
+	.ibl(named: "studio.exr", intensity: 2)
+	.skybox(named: "studio.jpg")
+```
+
+*Note: IBL only affects assets using a PBR material.*
 
 <br>
 
@@ -105,7 +153,8 @@ This renders a 3D model with the filename "*duck.gltf*" that's located in the ap
 
 ## Known issues 💢
 * Animating cameras using SwiftUI's animation model is still very wonky.
-* Bad error handling when a model fails to load.
+* Lackluster error handling when a model fails to load.
+* Depending on the asset's origin, they may not be centered correctly by default.
 
 <br>
 

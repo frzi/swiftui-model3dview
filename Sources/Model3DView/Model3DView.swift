@@ -15,7 +15,7 @@ import SwiftUI
 /// This view utilizes SceneKit to render a 3D model or a SceneKit scene.
 /// ```swift
 /// Model3DView(named: "duck.gltf")
-/// 	.transform(scale: [0.5, 0.5, 0.5])
+/// 	.transform(scale: 0.5)
 /// 	.camera(PerspectiveCamera())
 /// ```
 ///
@@ -267,7 +267,7 @@ extension Model3DView {
 					}
 			}
 		}
-		
+
 		private func prepareScene() {
 			contentNode.childNodes.forEach { $0.removeFromParentNode() }
 

@@ -2,7 +2,7 @@
 
 Effortlessly display 3D models in your SwiftUI app.
 
-## Overview
+![Model3DView](header)
 
 With *Model3DView* you can effortlessly display 3D models in your SwiftUI just like you would with images. Additionally you can manipulate the camera and transform the model, all while keeping things SwiftUI-friendly.
 
