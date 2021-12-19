@@ -9,7 +9,7 @@ With Model3DView displaying a 3D model is as easy as displaying an image. Additi
 ## Displaying a 3D model
 
 ``Model3DView/Model3DView`` can display a 3D model from three different sources:
-* Use ``Model3DView/Model3DView/init(file:)`` to reference a file using a file `URL`
+* ``Model3DView/Model3DView/init(file:)`` to reference a file using a file `URL`
 * ``Model3DView/Model3DView/init(named:)`` to reference a file from the app's bundle
 * ``Model3DView/Model3DView/init(scene:)`` to render a `SCNScene`.
 
@@ -17,7 +17,7 @@ With Model3DView displaying a 3D model is as easy as displaying an image. Additi
 Model3DView(named: "duck.gltf")
 ```
 
-The model and camera will be centered to show the model by default.
+The model and camera will be centered by default.
 
 - Note: When referencing a `SCNScene` instance, its contents will be copied to an internal SceneKit scene. Modifications made to the original `SCNScene` will have no effect to the scene rendered by Model3DView. 
 

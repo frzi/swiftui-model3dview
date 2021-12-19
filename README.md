@@ -69,7 +69,7 @@ Below a quick rundown of *Model3DView*'s features.
 
 Using *Model3DView* couldn't possibly be more easy. Use the `Model3DView` like any other view:
 ```swift
-import Model3DViewD
+import Model3DView
 
 struct MyView: View {
 	var body: some View {
@@ -128,11 +128,11 @@ Model3DView(named: "garden.obj")
 
 <br>
 
-### Skyboxes and IBL (image based lighting)
+### Skybox and IBL (image based lighting)
 *Model3DView* does not allow you to place lights in the scenery. Instead you can set the mood by using environment maps and the skybox texture. 
 ```swift
 Model3DView(file: product.path)
-	.ibl(named: "studio.exr", intensity: 2)
+	.ibl(named: "studio_env.exr", intensity: 2)
 	.skybox(named: "studio.jpg")
 ```
 
@@ -140,7 +140,7 @@ Model3DView(file: product.path)
 
 <br>
 
-## FAQ ℹ️
+## FAQ ✋
 ### Can I use this to make 3D games?
 ***No***. It is very important to understand *Model3DView* is made to only render 3D models in your SwiftUI app, with very limited interaction. It's nothing more than an 'ImageView' to easily spruce up your app with 3D graphics.
 
