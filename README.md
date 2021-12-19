@@ -32,8 +32,11 @@ With *Model3DView* you can effortlessly display 3D models in your SwiftUI just l
 
 ## Examples
 
-<-- image and link here -->
-
+[![Examples](Sources/Model3DView/Model3DView.docc/Resources/examples_preview.jpg)](https://github.com/frzi/Model3DView-Examples)
+* [Model3DView-Examples](https://github.com/frzi/Model3DView-Examples) contains:  
+  ┗ [FancyIntroduction](https://github.com/frzi/Model3DView-Examples/tree/main/FancyIntroduction)  
+  ┗ [Panorama viewer](https://github.com/frzi/Model3DView-Examples/tree/main/Panoramic)  
+  
 <br>
 
 ## Features ✨
