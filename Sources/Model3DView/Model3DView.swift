@@ -82,7 +82,7 @@ public struct Model3DView: ViewRepresentable {
 		#endif
 
 		// Anti-aliasing.
-		// If the screen's pixel ratio is above 1 we disable anti-aliasing. Otherwise use MSAAx2.
+		// If the screen's pixel ratio is above 2 we disable anti-aliasing. Otherwise use MSAAx2.
 		// This may become a view modifier at some point instead.
 		#if os(macOS)
 		let screenScale = NSScreen.main?.backingScaleFactor ?? 1
@@ -90,7 +90,7 @@ public struct Model3DView: ViewRepresentable {
 		let screenScale = UIScreen.main.scale
 		#endif
 
-		view.antialiasingMode = screenScale > 1 ? .none : .multisampling2X
+		view.antialiasingMode = screenScale > 2 ? .none : .multisampling2X
 
 		context.coordinator.camera = context.environment.camera
 		context.coordinator.setView(view)
