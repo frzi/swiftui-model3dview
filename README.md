@@ -8,7 +8,7 @@
 [![Xcode](https://img.shields.io/badge/Xcode-13-blue.svg?style=for-the-badge&logo=Xcode&logoColor=white)](https://developer.apple.com/xcode)
 [![MIT](https://img.shields.io/badge/license-MIT-black.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-With *Model3DView* you can effortlessly display 3D models in your SwiftUI just like you would with images. Additionally you can manipulate the camera and transform the model, all while keeping things SwiftUI-friendly.
+With *Model3DView* you can effortlessly display 3D models in your SwiftUI app just like you would with images. Additionally you can manipulate the camera and transform the model, all while keeping things SwiftUI-friendly.
 
 ⚠️ ***IMPORTANT***: *Model3DView* is still in very early stages of development. The API is not final and ~~may~~ will change over the course of upcoming version releases.
 
