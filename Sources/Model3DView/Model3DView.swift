@@ -291,11 +291,12 @@ extension Model3DView {
 				copiedRoot.boundingBox.max.y - copiedRoot.boundingBox.min.y,
 				copiedRoot.boundingBox.max.z - copiedRoot.boundingBox.min.z)
 			maxDimension = maxDimension == 0 ? 1 : maxDimension
+			maxDimension *= 1.1 // Making sure there's a bit of padding.
 			
 			contentScale = Float(2 / maxDimension)
 
 			contentCenter = mix(Vector3(copiedRoot.boundingBox.min), Vector3(copiedRoot.boundingBox.max), t: Float(0.5))
-			contentCenter *= Float(1 / maxDimension)
+			contentCenter *= contentScale
 
 			contentNode.addChildNode(copiedRoot)
 
