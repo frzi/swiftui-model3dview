@@ -50,7 +50,9 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 		// Find already loaded resource. Or a publisher in the process of loading...
 		if let container = table[key] {
 			if let value = container.value {
-				return Result<T, Error>.success(value).publisher
+				return Result<T, Error>
+					.success(value)
+					.publisher
 			}
 			else if let publisher = container.publisher {
 				return publisher
@@ -74,7 +76,7 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 	private final class WeakFutureValue {
 		private(set) weak var value: T?
 		private(set) var publisher: (any Publisher<T, Error>)?
-		private var cancellable: AnyCancellable!
+		private var cancellable: (any Cancellable)!
 
 		init(_ future: Future<T, Error>) {
 			publisher = future

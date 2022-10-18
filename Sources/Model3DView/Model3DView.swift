@@ -171,7 +171,7 @@ extension Model3DView {
 		private let contentNode = SCNNode()
 		private let scene = SCNScene()
 
-		private var loadSceneCancellable: AnyCancellable?
+		private var loadSceneCancellable: (any Cancellable)?
 		private var loadedScene: SCNScene? // Keep a reference for `AsyncResourcesCache`.
 
 		fileprivate var onLoadHandlers: [(ModelLoadState) -> Void] = []
