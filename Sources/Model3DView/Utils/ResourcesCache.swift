@@ -46,13 +46,11 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 
 	/// Returns a publisher for the resource associated with `identifier`.
 	/// `action` runs on a different thread.
-	func resource(for key: K, action: @escaping (K, Future<T, Error>.Promise) -> Void) -> AnyPublisher<T, Error> {
+	func resource(for key: K, action: @escaping (K, Future<T, Error>.Promise) -> Void) -> any Publisher<T, Error> {
 		// Find already loaded resource. Or a publisher in the process of loading...
 		if let container = table[key] {
 			if let value = container.value {
-				return Result<T, Error>.success(value)
-					.publisher
-					.eraseToAnyPublisher()
+				return Result<T, Error>.success(value).publisher
 			}
 			else if let publisher = container.publisher {
 				return publisher
@@ -68,14 +66,14 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 
 		table[key] = WeakFutureValue(future)
 
-		return future.eraseToAnyPublisher()
+		return future
 	}
 
 	// MARK: - Weak Future Value container
 	/// This object holds a weak reference to the value as well as a temporary publisher for the Future.
 	private final class WeakFutureValue {
 		private(set) weak var value: T?
-		private(set) var publisher: AnyPublisher<T, Error>?
+		private(set) var publisher: (any Publisher<T, Error>)?
 		private var cancellable: AnyCancellable!
 
 		init(_ future: Future<T, Error>) {
@@ -84,7 +82,6 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 					self.value = value
 					return value
 				}
-				.eraseToAnyPublisher()
 
 			cancellable = publisher!
 				.sink(
