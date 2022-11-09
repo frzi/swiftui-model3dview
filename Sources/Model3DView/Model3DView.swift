@@ -247,7 +247,7 @@ extension Model3DView {
 				}
 				.sink { completion in
 					if case .failure(_) = completion {
-						DispatchQueue.main.async {
+						Task { @MainActor in
 							for onLoad in self.onLoadHandlers {
 								onLoad(.failure)
 							}
@@ -260,7 +260,7 @@ extension Model3DView {
 			}
 			else if case .reference(let scene) = sceneFile {
 				loadSceneCancellable = Just(scene)
-					.receive(on: DispatchQueue.global())
+					.receive(on: RunLoop.main)
 					.sink { [weak self] scene in
 						self?.loadedScene = scene
 						self?.prepareScene()
@@ -272,7 +272,7 @@ extension Model3DView {
 			contentNode.childNodes.forEach { $0.removeFromParentNode() }
 
 			// Copy the root node(s) of the scene, copy their geometry and place them in the coordinator's scene.
-			guard let loadedScene = loadedScene else {
+			guard let loadedScene else {
 				return
 			}
 
@@ -300,7 +300,7 @@ extension Model3DView {
 
 			contentNode.addChildNode(copiedRoot)
 
-			DispatchQueue.main.async {
+			Task { @MainActor in
 				for onLoad in self.onLoadHandlers {
 					onLoad(.success)
 				}
@@ -318,7 +318,7 @@ extension Model3DView {
 			guard asset != skybox else {
 				return
 			}
-			
+
 			if let asset = asset {
 				scene.background.contents = Self.imageCache.resource(for: asset) { url in
 					PlatformImage(contentsOfFile: url.path)
@@ -327,7 +327,7 @@ extension Model3DView {
 			else {
 				scene.background.contents = nil
 			}
-			
+
 			skybox = asset
 		}
 		

@@ -61,7 +61,7 @@ final class AsyncResourcesCache<K: Hashable, T: AnyObject> {
 
 		// ... otherwise create a new publisher.
 		let future = Future<T, Error> { promise in
-			DispatchQueue.global().async {
+			Task { @MainActor in
 				action(key, promise)
 			}
 		}
