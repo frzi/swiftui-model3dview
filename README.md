@@ -62,7 +62,7 @@ Once added, import the package in your code:
 ```swift
 import Model3DView
 ```
-*If Xcode throws errors while resolving dependencies, you can temporarily link to the `main` branch, opposed to using a tagged version.*
+> **Note** If Xcode throws errors while resolving dependencies, you can temporarily link to the `main` branch, opposed to using a tagged version.*
 
 <br>
 
