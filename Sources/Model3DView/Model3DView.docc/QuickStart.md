@@ -45,7 +45,7 @@ ForEach(models) { model in
 
 ## Interactive cameras
 
-For your convience Model3DView comes with ``OrbitControls`` out of the box, applying orbit controls (also known as arcball) to the underlying Model3DViews. Use the ``Model3DView/Model3DView/cameraControls(_:)`` view modifier to apply interactive camera controls. This view modifier replaces the ``Model3DView/Model3DView/camera(_:)`` modifier.
+For your convenience Model3DView comes with ``OrbitControls`` out of the box, applying orbit controls (also known as arcball) to the underlying Model3DViews. Use the ``Model3DView/Model3DView/cameraControls(_:)`` view modifier to apply interactive camera controls. This view modifier replaces the ``Model3DView/Model3DView/camera(_:)`` modifier.
 
 ```swift
 struct MyView: View {
