@@ -54,7 +54,7 @@ extension Matrix4x4 {
 	// MARK: Initializers
 	public static let identity = Matrix4x4(
 		[1, 0, 0, 0],
-		[0, 1, 0, 1],
+		[0, 1, 0, 0],
 		[0, 0, 1, 0],
 		[0, 0, 0, 1]
 	)
